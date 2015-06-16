@@ -69,16 +69,24 @@ class Main extends Sprite
 		switch (turn)
 		{
 			case Value.TURN_PLAYER_1:
-			if (board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1_TRAIL))
+			var current:Position = new Position (player1.x, player1.y);
+			player1.move ();
+			
+			switch (Value.board [player1.x][player1.y])
 			{
-				player1.move ();
-				if (board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1))
-					turn = Value.TURN_PLAYER_2;
-				else
-					gameState = Value.GAMESTATE_END;
-			}
-			else
+				case Value.BLOCK_EMPTY:
+				board.block (current.x, current.y, Value.BLOCK_PLAYER_1_TRAIL);
+				board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1);
+				// trace ("Value.board: " + Value.board);
+				
+				case Value.BLOCK_PLAYER_1_TRAIL:
+				board.block (current.x, current.y, Value.BLOCK_EMPTY);
+				board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1);
+				// trace ("Value.board: " + Value.board);
+				
+				default:
 				gameState = Value.GAMESTATE_END;
+			}
 			
 			case Value.TURN_PLAYER_2:
 			// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2_TRAIL))
@@ -132,18 +140,18 @@ class Board extends Sprite
 		block (player1.x, player1.y, Value.BLOCK_PLAYER_1);
 		block (player2.x, player2.y, Value.BLOCK_PLAYER_2);
 		
-		// var obstacle:Int = 5 + Std.random (20);
-		// while (obstacle > 0)
-		// {
-			// var x = Std.random (Value.MAP_SIZE);
-			// var y = Std.random (Value.MAP_SIZE);
+		var obstacle:Int = 5 + Std.random (20);
+		while (obstacle > 0)
+		{
+			var x = Std.random (Value.MAP_SIZE);
+			var y = Std.random (Value.MAP_SIZE);
 			
-			// if (Value.board [x][y] != Value.BLOCK_EMPTY)
-				// continue;
+			if (Value.board [x][y] != Value.BLOCK_EMPTY)
+				continue;
 			
-			// block (x, y, Value.BLOCK_OBSTACLE);
-			// obstacle -= 1;
-		// }
+			block (x, y, Value.BLOCK_OBSTACLE);
+			obstacle -= 1;
+		}
 	}
 	
 	public function block (x:Int, y:Int, status:Int):Bool
@@ -154,20 +162,20 @@ class Board extends Sprite
 		var block:Block = cast (obj, Block);
 		if (block == null) return false;
 		
-		var blockState = Value.board [x][y];
-		switch (blockState)
-		{
-			case Value.BLOCK_EMPTY:
+		// var blockState = Value.board [x][y];
+		// switch (blockState)
+		// {
+			// case Value.BLOCK_EMPTY:
 			
-			case Value.BLOCK_PLAYER_1:
-			if (status != Value.BLOCK_PLAYER_1_TRAIL) return false;
+			// case Value.BLOCK_PLAYER_1:
+			// if (status != Value.BLOCK_PLAYER_1_TRAIL) return false;
 			
-			case Value.BLOCK_PLAYER_2:
-			if (status != Value.BLOCK_PLAYER_2_TRAIL) return false;
+			// case Value.BLOCK_PLAYER_2:
+			// if (status != Value.BLOCK_PLAYER_2_TRAIL) return false;
 			
-			default:
-			return false;
-		}
+			// default:
+			// return false;
+		// }
 		
 		block.status = status;
 		Value.board [x][y] = status;
@@ -314,7 +322,7 @@ class Me extends Player
 	{
 		super.clone ();
 		
-		zone [this.x][this.y] = 0;
+		// zone [this.x][this.y] = 0;
 		
 		// if (Value.enemyPosition.x > 0 && zone [Value.enemyPosition.x - 1][Value.enemyPosition.y] == 0)
 			// zone [Value.enemyPosition.x - 1][Value.enemyPosition.y] = -1;
@@ -385,7 +393,7 @@ class Me extends Player
 			var selection = Std.random (suitableDir.length);
 			var dir = suitableDir[selection];
 			
-			trace ("suitableDir: " + suitableDir + " >> " + dir);
+			// trace ("suitableDir: " + suitableDir + " >> " + dir);
 			
 			if (dir == Value.DIRECTION_LEFT)			func (data, x - 1, y, move - 1);
 			else if (dir == Value.DIRECTION_UP)			func (data, x, y - 1, move - 1);
@@ -401,11 +409,12 @@ class Me extends Player
 		else if (this.y - 1 == maxY)		dir = Value.DIRECTION_UP;
 		else if (this.y + 1 == maxY)		dir = Value.DIRECTION_DOWN;
 		
-		trace ("" + dir);
+		// trace ("" + dir);
 		return dir;
 	}
 	
 	private var moves:Array<Position> = null;
+	private var queue:Array<Position> = null;
 	private function AI_2 ():Int
 	{
 		var validMoves = function (map:Array<Array<Int>>, x:Int, y:Int):Array<Position>
@@ -418,48 +427,39 @@ class Me extends Player
 			return list;
 		};
 		
-		if (moves == null)
+		var nextMove:Position = null;
+		
+		if (moves == null) moves = [];
+		if (queue == null) queue = validMoves (zone, Value.myPosition.x, Value.myPosition.y);
+		
+		if (queue.length > 0)
 		{
-			var queue:Array<Position> = [new Position (Value.myPosition.x, Value.myPosition.y)];
+			var move:Position = queue.pop ();
+			var listMove:Array<Position> = validMoves (zone, move.x, move.y);
+			// trace ("");
+			// trace ("zone: " + zone);
 			
-			moves = [];
-			while (queue.length > 0)
+			if (listMove.length > 0)
 			{
-				trace ("");
-				var move:Position = queue.pop ();
-				var listMove:Array<Position> = validMoves (zone, move.x, move.y);
-				trace ("current: " + move + " >> " + listMove);
-				if (listMove.length > 0)
-				{
-					for (m in listMove) queue.push (m);
-					moves.push (move);
-					zone [move.x][move.y] = moves.length;
-					trace ("queue " + queue);
-					trace ("go " + move);
-				}
-				else if (moves.length > 0)
-				{
-					var oldMove:Position = moves.pop ();
-					trace ("back " + oldMove);
-					zone [oldMove.x][oldMove.y] = 0;
-				}
-				
-				if (moves.length == 7) break;
+				for (m in listMove) queue.push (m);
+				nextMove = move;
+				moves.push (move);
+				trace ("move: " + move + " >> " + listMove);
 			}
-
-			trace ("moves: " + moves);
-			moves.shift ();
+			else if (moves.length > 0)
+			{
+				nextMove = moves.pop ();
+				trace ("back: " + move + " >> " + nextMove + " >> " + queue);
+			}
 		}
-		if (moves.length == 0) return -1;
-		var currentMove:Position = moves.shift ();
 		
 		var dir:Int = -1;
-		if (this.x - 1 >= currentMove.x)			dir = Value.DIRECTION_LEFT;
-		else if (this.x + 1 <= currentMove.x)		dir = Value.DIRECTION_RIGHT;
-		else if (this.y - 1 >= currentMove.y)		dir = Value.DIRECTION_UP;
-		else if (this.y + 1 <= currentMove.y)		dir = Value.DIRECTION_DOWN;
+		if (this.x - 1 >= nextMove.x)			dir = Value.DIRECTION_LEFT;
+		else if (this.x + 1 <= nextMove.x)		dir = Value.DIRECTION_RIGHT;
+		else if (this.y - 1 >= nextMove.y)		dir = Value.DIRECTION_UP;
+		else if (this.y + 1 <= nextMove.y)		dir = Value.DIRECTION_DOWN;
 		
-		trace ("my: " + Value.myPosition + " >> " + currentMove + " >> " + dir);
+		// trace ("my: " + Value.myPosition + " >> " + nextMove + " >> " + dir);
 		return dir;
 	}
 }
@@ -490,7 +490,7 @@ class Value
 	public static var DIRECTION_RIGHT:Int = 3;
 	public static var DIRECTION_DOWN:Int = 4;
 	
-	public static var MAP_SIZE:Int = 3;
+	public static var MAP_SIZE:Int = 11;
 	public static var TURN_TIME:Int = 10;
 	
 	public static var BLOCK_SIZE:Int = 50;

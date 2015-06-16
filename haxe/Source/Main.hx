@@ -81,16 +81,16 @@ class Main extends Sprite
 				gameState = Value.GAMESTATE_END;
 			
 			case Value.TURN_PLAYER_2:
-			if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2_TRAIL))
-			{
-				player2.move ();
-				if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2))
+			// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2_TRAIL))
+			// {
+				// player2.move ();
+				// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2))
 					turn = Value.TURN_PLAYER_1;
-				else
-					gameState = Value.GAMESTATE_END;
-			}
-			else
-				gameState = Value.GAMESTATE_END;
+				// else
+					// gameState = Value.GAMESTATE_END;
+			// }
+			// else
+				// gameState = Value.GAMESTATE_END;
 		}
 	}
 }
@@ -132,18 +132,18 @@ class Board extends Sprite
 		block (player1.x, player1.y, Value.BLOCK_PLAYER_1);
 		block (player2.x, player2.y, Value.BLOCK_PLAYER_2);
 		
-		var obstacle:Int = 5 + Std.random (20);
-		while (obstacle > 0)
-		{
-			var x = Std.random (Value.MAP_SIZE);
-			var y = Std.random (Value.MAP_SIZE);
+		// var obstacle:Int = 5 + Std.random (20);
+		// while (obstacle > 0)
+		// {
+			// var x = Std.random (Value.MAP_SIZE);
+			// var y = Std.random (Value.MAP_SIZE);
 			
-			if (Value.board [x][y] != Value.BLOCK_EMPTY)
-				continue;
+			// if (Value.board [x][y] != Value.BLOCK_EMPTY)
+				// continue;
 			
-			block (x, y, Value.BLOCK_OBSTACLE);
-			obstacle -= 1;
-		}
+			// block (x, y, Value.BLOCK_OBSTACLE);
+			// obstacle -= 1;
+		// }
 	}
 	
 	public function block (x:Int, y:Int, status:Int):Bool
@@ -304,7 +304,7 @@ class Me extends Player
 {
 	public var AI:Int;
 	
-	public function new (id:Int, AI:Int = 1)
+	public function new (id:Int, AI:Int = 2)
 	{
 		super (id);
 		this.AI = AI;
@@ -405,9 +405,62 @@ class Me extends Player
 		return dir;
 	}
 	
+	private var moves:Array<Position> = null;
 	private function AI_2 ():Int
 	{
-		return 0;
+		var validMoves = function (map:Array<Array<Int>>, x:Int, y:Int):Array<Position>
+		{
+			var list:Array<Position> = [];
+			if (x > 0 && map [x - 1][y] == 0) 					list.push (new Position (x - 1, y));
+			if (y > 0 && map [x][y - 1] == 0) 					list.push (new Position (x, y - 1));
+			if (x < Value.MAP_SIZE - 1 && map [x + 1][y] == 0)	list.push (new Position (x + 1, y));
+			if (y < Value.MAP_SIZE - 1 && map [x][y + 1] == 0)	list.push (new Position (x, y + 1));
+			return list;
+		};
+		
+		if (moves == null)
+		{
+			var queue:Array<Position> = [new Position (Value.myPosition.x, Value.myPosition.y)];
+			
+			moves = [];
+			while (queue.length > 0)
+			{
+				trace ("");
+				var move:Position = queue.pop ();
+				var listMove:Array<Position> = validMoves (zone, move.x, move.y);
+				trace ("current: " + move + " >> " + listMove);
+				if (listMove.length > 0)
+				{
+					for (m in listMove) queue.push (m);
+					moves.push (move);
+					zone [move.x][move.y] = moves.length;
+					trace ("queue " + queue);
+					trace ("go " + move);
+				}
+				else if (moves.length > 0)
+				{
+					var oldMove:Position = moves.pop ();
+					trace ("back " + oldMove);
+					zone [oldMove.x][oldMove.y] = 0;
+				}
+				
+				if (moves.length == 7) break;
+			}
+
+			trace ("moves: " + moves);
+			moves.shift ();
+		}
+		if (moves.length == 0) return -1;
+		var currentMove:Position = moves.shift ();
+		
+		var dir:Int = -1;
+		if (this.x - 1 >= currentMove.x)			dir = Value.DIRECTION_LEFT;
+		else if (this.x + 1 <= currentMove.x)		dir = Value.DIRECTION_RIGHT;
+		else if (this.y - 1 >= currentMove.y)		dir = Value.DIRECTION_UP;
+		else if (this.y + 1 <= currentMove.y)		dir = Value.DIRECTION_DOWN;
+		
+		trace ("my: " + Value.myPosition + " >> " + currentMove + " >> " + dir);
+		return dir;
 	}
 }
 
@@ -437,7 +490,7 @@ class Value
 	public static var DIRECTION_RIGHT:Int = 3;
 	public static var DIRECTION_DOWN:Int = 4;
 	
-	public static var MAP_SIZE:Int = 11;
+	public static var MAP_SIZE:Int = 3;
 	public static var TURN_TIME:Int = 10;
 	
 	public static var BLOCK_SIZE:Int = 50;
@@ -458,4 +511,6 @@ class Position
 		x = _x;
 		y = _y;
 	}
+	
+	public function toString () { return "[" + x + ", " + y + "]"; }
 }

@@ -257,153 +257,187 @@ function Send(data) {
 // - BLOCK_PLAYER_2_TRAIL = 4; Square player 2 went through before
 // - BLOCK_OBSTACLE = 5;
 // Which player you are? You can know it from variable "index"
-// Player 1 have value 0, and player 2 have value 1, but you probably
+// Player 1 have value 1, and player 2 have value 2, but you probably
 // don't care about that anyway.
 //
 // That's pretty much about it. Now, let's start coding.
 // ===========================================================
 
-function evalute_pos(pos_x, pos_y, pos_dir, pos_level)
-{	
-	var score = 1, numObstabcle = 0;
-	console.log("lvl " + pos_level + " =>" + pos_x + ":" + pos_y);
-	board[pos_x][pos_y] = -1;	
-	if (pos_x > 0 &&  board[pos_x - 1][pos_y] == BLOCK_EMPTY)
+
+var mapHistory = null;
+function buildMapHistory()
+{
+	mapHistory = new Array();
+	for (i=0; i<MAP_SIZE*MAP_SIZE; i++)
 	{
-		score++;
-		if(pos_level > 0)
-			score += evalute_pos(pos_x - 1, pos_y, DIRECTION_LEFT, pos_level - 1);
+		mapHistory[i] = 0;
 	}
-	else
+}
+
+function buildGraph()
+{
+	var i = 0;
+	var j = 0;
+	
+	var idx = 0;
+	var idx2 = 0;
+	var graphList = new Array();	
+	for (i=0; i<MAP_SIZE*MAP_SIZE; i++)
 	{
-		if(pos_x <= 0 || board[pos_x - 1][pos_y] == BLOCK_OBSTACLE)		
-			numObstabcle++;
+		graphList[i] = new Array();
 	}
 	
-	if (pos_x < MAP_SIZE - 1 &&  board[pos_x+1][pos_y] == BLOCK_EMPTY)
+	for (i=0; i<MAP_SIZE; i++)
 	{
-		score++;	
-		if(pos_level > 0)
-			score += evalute_pos(pos_x + 1, pos_y, DIRECTION_RIGHT, pos_level-1);
-	}
-	else
+		for (j=0; j<MAP_SIZE; j++)
+		{
+			idx = ConvertCoord(i, j);
+			if(board[i][j] == BLOCK_EMPTY)
+			{
+				if (i > 0 && board[i-1][j] == BLOCK_EMPTY)
+				{
+					idx2 = ConvertCoord(i-1, j);
+					graphList[idx].push(idx2);
+				}
+				
+				if (i < MAP_SIZE - 1 && board[i+1][j] == BLOCK_EMPTY)
+				{
+					idx2 = ConvertCoord(i+1, j);
+					graphList[idx].push(idx2);
+				}
+				
+				if (j < MAP_SIZE - 1 && board[i][j + 1] == BLOCK_EMPTY)
+				{
+					idx2 = ConvertCoord(i, j + 1);
+					graphList[idx].push(idx2);
+				}
+				
+				if (j > 0 && board[i][j - 1] == BLOCK_EMPTY)
+				{
+					idx2 = ConvertCoord(i, j - 1);
+					graphList[idx].push(idx2);
+				}
+			}
+		}
+	}	
+
+	return graphList;
+}
+
+
+function calcBestZone(graphArray, index_pos)
+{
+	var cloneArrayGraph = graphArray.slice(0);
+	var cloneArrayHistory = mapHistory.slice(0);
+	var i = 0; var j = 0; var zone = 0; var bestZone = -1;
+	var len = graphArray[index_pos].length;
+	var len2 = 0; var idx = 0;
+	cloneArrayHistory[index_pos] = 1;
+	for(i = 0; i < len; i++)
 	{
-		if(pos_x >= MAP_SIZE-1 || board[pos_x + 1][pos_y] == BLOCK_OBSTACLE)		
-			numObstabcle++;
-	} 
+		idx = graphArray[index_pos][i];			
+		len2 = graphArray[idx].length;
+		zone = 1;
+		for(j = 0; j < len2; j++)
+		{
+			
+			if(cloneArrayHistory[idx] == 0)
+			{
+				cloneArrayHistory[idx] = 1;
+				zone = calcZone(cloneArrayGraph, cloneArrayHistory, idx);
+				if(bestZone < zone)
+					bestZone = zone;
+				console.log("Zone " + idx + " for idx:" + index_pos + " => " + zone);
+			}
+		}
+	}	
 	
-	if (pos_y < MAP_SIZE - 1 &&  board[pos_x][pos_y + 1] == BLOCK_EMPTY)
-	{
-		score++;
-		if(pos_level > 0)
-			score += evalute_pos(pos_x, pos_y + 1, DIRECTION_DOWN, pos_level-1);
-	}
-	 else
-	{
-		if(pos_y >= MAP_SIZE-1 || board[pos_x][pos_y + 1] == BLOCK_OBSTACLE)		
-			numObstabcle++;	
-	} 
+	return bestZone;
+}
+
+function calcZone(graphMap, historyMap, from_pos)
+{
+	var zone = 1;
+	var i = 0; var j = 0; var idx = -1;
+	var len = graphMap[from_pos].length;
 	
-	if (pos_y > 0 &&  board[pos_x][pos_y - 1] == BLOCK_EMPTY)
+	for(i = 0; i < len; i++)
 	{
-		score++;
-		if(pos_level > 0)
-			score += evalute_pos(pos_x, pos_y - 1, DIRECTION_UP, pos_level-1);
+		idx = graphMap[from_pos][i];
+		if(historyMap[idx] == 0)
+		{
+			zone++;
+			historyMap[idx] = 1;
+			zone += calcZone(graphMap, historyMap, idx);
+		}
+		
 	}
-	else
-	{
-		if(pos_y <= 0 || board[pos_x][pos_y - 1] == BLOCK_OBSTACLE)		
-			numObstabcle++;
-	} 
 	
-	var maxObstablce = 2;
-	//if(numMove > MAP_SIZE - 2) maxObstablce = 3;
-	if(numObstabcle > maxObstablce)
-		score -= numObstabcle;
-	else
-		 score += numObstabcle;
-	if(pos_x == pos_y) score++;
-	board[pos_x][pos_y] = BLOCK_EMPTY;
-	return score;
+	return zone;
 }
 
 var numMove = 0;
+var lastMove = -1;
 function MyTurn() {
+	
+	if(mapHistory == null)
+		buildMapHistory();	
 	// This is my testing algorithm, which will pick a random valid move, then move.
 	// This array contain which move can I make.
-	//var suitableDir = new Array();
+	var suitableDir = new Array();
+	var suitableDirIDX = new Array();	
 	// I check the terrain around to find them
 	var x = myPosition.x;
 	var y = myPosition.y;
 	
-	var dir = DIRECTION_LEFT;
-	var lvl = 1;
-	if(numMove > MAP_SIZE -2 ) lvl = 2;
-	var bestScore = -10, scoreCurrent = -10;
-	// With each movable square, I pust it to the array
+	// With each movable square, I pust it to the array	
+	if (lastMove != DIRECTION_RIGHT && x > 0 && board[x-1][y] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_LEFT);
+		suitableDirIDX.push(ConvertCoord(x-1, y));
+	}
+	if (lastMove != DIRECTION_LEFT && x < MAP_SIZE - 1 &&  board[x+1][y] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_RIGHT);
+		suitableDirIDX.push(ConvertCoord(x+1, y));
+	}
+	if (lastMove != DIRECTION_DOWN && y > 0 && board[x][y-1] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_UP);
+		suitableDirIDX.push(ConvertCoord(x, y - 1));
+	}
+	if (lastMove != DIRECTION_UP && y < MAP_SIZE - 1 &&  board[x][y+1] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_DOWN);
+		suitableDirIDX.push(ConvertCoord(x, y + 1));
+	}
 	
-	/* if(numMove < MAP_SIZE - 2)
-	{ */
-		if (x > 0 && board[x-1][y] == BLOCK_EMPTY)
-		{
-			scoreCurrent  = evalute_pos(x-1, y, DIRECTION_LEFT, lvl);
-			if(scoreCurrent >= bestScore)
-			{
-				bestScore = scoreCurrent;
-				dir = DIRECTION_LEFT;
-			}		
-			//suitableDir.push (DIRECTION_LEFT);
-			console.log("LEFT SCORE:" + scoreCurrent + " bestScore:" + bestScore);
-		}
-		
-		if (x < MAP_SIZE - 1 &&  board[x+1][y] == BLOCK_EMPTY)
-		{
-			scoreCurrent  = evalute_pos(x+1, y, DIRECTION_RIGHT, lvl);
-			if(scoreCurrent >= bestScore)
-			{
-				bestScore = scoreCurrent;
-				dir = DIRECTION_RIGHT;
-			}
-			
-			console.log("RIGHT SCORE:" + scoreCurrent + " bestScore:" + bestScore);
-			//suitableDir.push (DIRECTION_RIGHT);
-		}
-		
-		if (y > 0 && board[x][y-1] == BLOCK_EMPTY)
-		{
-			scoreCurrent  = evalute_pos(x, y-1, DIRECTION_UP, lvl);
-			if(scoreCurrent >= bestScore)
-			{
-				bestScore = scoreCurrent;
-				dir = DIRECTION_UP;	
-			}
-			console.log("UP SCORE:" + scoreCurrent + " bestScore:" + bestScore);
-			//suitableDir.push (DIRECTION_UP);
-		}
-		
-		if (y < MAP_SIZE - 1 &&  board[x][y+1] == BLOCK_EMPTY)
-		{
-			scoreCurrent  = evalute_pos(x, y+1, DIRECTION_DOWN, lvl);
-			if(scoreCurrent >= bestScore)
-			{
-				bestScore = scoreCurrent;
-				dir = DIRECTION_DOWN;	
-			}
-			console.log("DOWN SCORE:" + scoreCurrent + " bestScore:" + bestScore);
-			//suitableDir.push (DIRECTION_DOWN);
-		}
-/* 	}
+	if(suitableDir.length <= 0)
+		lastMove = DIRECTION_LEFT;	
+	else if(suitableDir.length == 1)
+		lastMove = suitableDir[0];
 	else
 	{
 		
-	} */
-	
-	// Choose one of the suitable direction
-	//var selection = (Math.random() * suitableDir.length) >> 0;
-	//var dir = suitableDir[selection];
-		
-	// Call "Command". Don't ever forget this. And make it quick, you only have 3 sec to call this.
-	numMove++
-	console.log("numMove:" + numMove + " dir:" + dir);
-	Command(dir);
+		if(numMove < MAP_SIZE)
+		{
+			var selection = (Math.random() * suitableDir.length) >> 0;
+			lastMove = suitableDir[selection];			
+		}
+		else
+		{
+			graph = buildGraph();
+			var len = suitableDirIDX.length;
+			var bestDirZone =0, currZOne = 0;
+			for(var i = 0; i < len; i++)
+			{
+				currZOne = calcBestZone(graph, suitableDirIDX[i]);
+				if(currZOne >= bestDirZone)
+				{	
+					lastMove = suitableDir[i];
+					bestDirZone = currZOne;
+				}
+			}
+		}
+	}
+	// Call "Command". Don't ever forget this. And make it quick, you only have 3 sec to call this.		
+	console.log("suitableDir:" + suitableDir);
+	numMove++;
+	Command(lastMove);
 }

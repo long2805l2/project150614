@@ -7,7 +7,8 @@ import openfl.display.DisplayObject;
 
 class Main extends Sprite
 {
-	public static var board:Board = null;
+	public var board:Board = null;
+	public var game:Game = null;
 	
 	public function new ()
 	{
@@ -44,25 +45,12 @@ class Main extends Sprite
 
 	public function onRandom (e:MouseEvent):Void
 	{
-		var numObstacle:Int = 5;
-		var obstacles:Array<Position> = [];
-		while (numObstacle > 0)
-		{
-			var x:Int = Std.random (Value.MAP_SIZE);
-			var y:Int = Std.random (Value.MAP_SIZE);
-			obstacles.push (new Position (x, y));
-			obstacles.push (new Position (Value.MAP_SIZE - x - 1, Value.MAP_SIZE - y - 1));
-			numObstacle -= 1;
-		}
+		game = new Game (Value.MAP_SIZE, Value.OBSTACLES);
+		// board.draw (game.colors);
 		
 		for (x in 0 ... Value.MAP_SIZE)
 			for (y in 0 ... Value.MAP_SIZE)
-				board.block (x, y, 0xFFFFFF, "");
-				
-		for (obstacle in obstacles) board.block (obstacle.x, obstacle.y, 0x000000, "");
-		
-		board.block (0, 0, 0x00FF00, "");
-		board.block (Value.MAP_SIZE - 1, Value.MAP_SIZE - 1, 0xFF0000, "");
+				board.block (x, y, Value.BLOCK_COLORS [game.board [x][y]], "");
 	}
 
 	public function onReset (e:MouseEvent):Void

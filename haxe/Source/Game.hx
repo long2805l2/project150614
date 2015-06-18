@@ -2,77 +2,77 @@ package;
 
 class Game
 {
-	// public static var turn:Int = -1;
-	// public static var gameState:Int = -1;
+	private var map:Array<Array<Int>>;
+	private var mapSize:Int;
+	private var obstacles:Int;
+	public var board:Array<Array<Int>>;
 	
-	// public static var board:Board = null;
-	// public static var player1:Player = null;
-	// public static var player2:Player = null;
+	private var state:Int;
+	private var turn:Int;
 	
-	public function new ()
+	public var player1:Player;
+	public var player2:Player;
+	
+	public function new (mapSize:Int, obstacles:Int)
 	{
-		// player1 = new Me (1);
-		// Value.myPosition = player1.position;
+		this.mapSize = mapSize;
+		this.obstacles = obstacles;
 		
-		// player2 = new Player (2);
-		// Value.enemyPosition = player2.position;
+		map = [];
+		board = [];
+		for (x in 0 ... mapSize)
+		{
+			map [x] = [];
+			board [x] = [];
+			for (y in 0 ... mapSize)
+			{				
+				map [x][y] = Value.BLOCK_EMPTY;
+				board [x][y] = Value.BLOCK_EMPTY;
+			}
+		}
 		
-		// board = new Board ();
-		// addChild (board);
-	}
+		for (obstacle in 0 ... obstacles)
+		{
+			var x:Int = Std.random (Value.MAP_SIZE);
+			var y:Int = Std.random (Value.MAP_SIZE);
+			
+			map [x][y] = Value.BLOCK_OBSTACLE;
+			map [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
+			
+			board [x][y] = Value.BLOCK_OBSTACLE;
+			board [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
+		}
+		
+		map [0][0] = Value.BLOCK_PLAYER_1;
+		board [0][0] = Value.BLOCK_PLAYER_1;
+		
+		map [Value.MAP_SIZE - 1][Value.MAP_SIZE - 1] = Value.BLOCK_PLAYER_1;
+		board [Value.MAP_SIZE - 1][Value.MAP_SIZE - 1] = Value.BLOCK_PLAYER_2;
 
-	public function start ():Void
-	{
-		// gameState = Value.GAMESTATE_COMMENCING;
-		// turn = Value.TURN_PLAYER_1;
-		
-		// player1.x = 0;
-		// player1.y = 0;
-		
-		// player2.x = Value.MAP_SIZE - 1;
-		// player2.y = Value.MAP_SIZE - 1;
-		
-		// board.newGame (player1, player2);
+		state = Value.GAMESTATE_WAIT_FOR_PLAYER;
 	}
 	
-	// private var countdown:Int = Value.TURN_TIME;
+	public function start (p1:Player, p2:Player):Void
+	{
+		player1 = p1;
+		player2 = p2;
+		
+		state = Value.GAMESTATE_COMMENCING;
+		turn = Value.TURN_PLAYER_1;
+	}
+	
+	public function pause ():Void
+	{
+	}
+	
+	public function reset ():Void
+	{
+		for (x in 0 ... mapSize)
+			for (y in 0 ... mapSize)
+				board [x][y] = map [x][y];
+	}
+	
 	public function update ():Void
 	{
-		// if (gameState == Value.GAMESTATE_END)
-		// {
-			// removeEventListener (Event.ENTER_FRAME, onEnterFrame);
-			// return;
-		// }
-		
-		// if (-- countdown > 0) return;
-		// countdown = Value.TURN_TIME;
-		
-		
-		// switch (turn)
-		// {
-			// case Value.TURN_PLAYER_1:
-			// if (board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1_TRAIL))
-			// {
-				// player1.move ();
-				// if (board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1))
-					// turn = Value.TURN_PLAYER_2;
-				// else
-					// gameState = Value.GAMESTATE_END;
-			// }
-			// else
-				// gameState = Value.GAMESTATE_END;
-			
-			// case Value.TURN_PLAYER_2:
-			// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2_TRAIL))
-			// {
-				// player2.move ();
-				// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2))
-					// turn = Value.TURN_PLAYER_1;
-				// else
-					// gameState = Value.GAMESTATE_END;
-			// }
-			// else
-				// gameState = Value.GAMESTATE_END;
-		// }
 	}
 }

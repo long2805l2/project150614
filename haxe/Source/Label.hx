@@ -24,8 +24,8 @@ import flash.text.GridFitType;
 class Label extends Sprite
 {
 	public var textField (default, null):TextField;
-	public var textFormat (default, set):TextFormat;
-	public var text (default, set):String;
+	public var textFormat (get, set):TextFormat;
+	public var text (get, set):String;
 	public var anchor (default, set):Int;
 	
 	public function new (text:String, format:TextFormat, x:Float = 0, y:Float = 0, anchor:Int = 0)
@@ -33,12 +33,20 @@ class Label extends Sprite
 		super ();
 		
 		addChild (textField = new TextField ());
-		
 		textField.x = 0;
 		textField.y = 0;
+		textField.embedFonts = true;
 		textField.selectable = false;
 		textField.autoSize = TextFieldAutoSize.LEFT;
 		textField.wordWrap = false;
+		
+		this.textFormat = format;
+		this.text = text;
+		this.x = x;
+		this.y = y;
+		this.anchor = anchor;
+		
+		this.update ();
 	}
 	
 	public function set_anchor (anchor:Int):Int
@@ -49,14 +57,28 @@ class Label extends Sprite
 	
 	public function set_text (text:String):String
 	{
-		this.text = text;
-		return this.text;		
+		// if (textField == null) return null;
+		textField.htmlText = text;
+		return textField.htmlText;		
+	}
+	
+	public function get_text ():String
+	{
+		// if (textField == null) return null;
+		return textField.htmlText;
 	}
 	
 	public function set_textFormat (format:TextFormat):TextFormat
 	{
-		this.textFormat = format;
-		return this.textFormat;
+		// if (textField == null) return null;
+		textField.defaultTextFormat = format;
+		return textField.defaultTextFormat;
+	}
+	
+	public function get_textFormat ():TextFormat
+	{
+		// if (textField == null) return null;
+		return textField.defaultTextFormat;
 	}
 	
 	public function update ():Void

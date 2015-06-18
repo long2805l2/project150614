@@ -7,90 +7,69 @@ import openfl.display.DisplayObject;
 
 class Main extends Sprite
 {
-	public static var turn:Int = -1;
-	public static var gameState:Int = -1;
-	
 	public static var board:Board = null;
-	public static var player1:Player = null;
-	public static var player2:Player = null;
 	
 	public function new ()
 	{
 		super ();
+		Fonts.init ();
 		
-		player1 = new Me (1);
-		Value.myPosition = player1.position;
-		
-		player2 = new Player (2);
-		Value.enemyPosition = player2.position;
-		
-		board = new Board ();
+		board = new Board (Value.MAP_SIZE, Value.MAP_SIZE, Value.BLOCK_SIZE);
+		board.x = 70;
+		board.y = 70;
 		addChild (board);
 		
-		var startBtn:Sprite = new Sprite ();
-		startBtn.x = 675;
-		startBtn.y = 100;
-		startBtn.graphics.beginFill (0x8F8F8F, 1);
-		startBtn.graphics.lineStyle (1, 0x000000, 2);
-		startBtn.graphics.drawRoundRect (-100, -15, 200, 30, 10);
-		startBtn.addEventListener (MouseEvent.CLICK, onStart);
-		addChild (startBtn);
+		var randomBtn:Button = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">New Map</font>", 160, 40);
+		randomBtn.x = 700;
+		randomBtn.y = 70;
+		randomBtn.addEventListener (MouseEvent.CLICK, onRandom);
+		addChild (randomBtn);
+		
+		var resetBtn:Button = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Reset</font>", 160, 40);
+		resetBtn.x = 700;
+		resetBtn.y = 70 + 40 + 10;
+		resetBtn.addEventListener (MouseEvent.CLICK, onReset);
+		addChild (resetBtn);
+		
+		var controlBtn:Button = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Play</font>", 160, 40);
+		controlBtn.x = 700;
+		controlBtn.y = 70 + 40 + 10 + 40 + 10;
+		controlBtn.addEventListener (MouseEvent.CLICK, onControl);
+		addChild (controlBtn);
 	}
 
-	public function onStart (e:MouseEvent):Void
+	public function onControl (e:MouseEvent):Void
 	{
-		gameState = Value.GAMESTATE_COMMENCING;
-		turn = Value.TURN_PLAYER_1;
+	}
+
+	public function onRandom (e:MouseEvent):Void
+	{
+		var numObstacle:Int = 5;
+		var obstacles:Array<Position> = [];
+		while (numObstacle > 0)
+		{
+			var x:Int = Std.random (Value.MAP_SIZE);
+			var y:Int = Std.random (Value.MAP_SIZE);
+			obstacles.push (new Position (x, y));
+			obstacles.push (new Position (Value.MAP_SIZE - x - 1, Value.MAP_SIZE - y - 1));
+			numObstacle -= 1;
+		}
 		
-		player1.x = 0;
-		player1.y = 0;
+		for (x in 0 ... Value.MAP_SIZE)
+			for (y in 0 ... Value.MAP_SIZE)
+				board.block (x, y, 0xFFFFFF, "");
+				
+		for (obstacle in obstacles) board.block (obstacle.x, obstacle.y, 0x000000, "");
 		
-		player2.x = Value.MAP_SIZE - 1;
-		player2.y = Value.MAP_SIZE - 1;
-		
-		board.newGame (player1, player2);
-		
-		addEventListener (Event.ENTER_FRAME, onEnterFrame);
+		board.block (0, 0, 0x00FF00, "");
+		board.block (Value.MAP_SIZE - 1, Value.MAP_SIZE - 1, 0xFF0000, "");
+	}
+
+	public function onReset (e:MouseEvent):Void
+	{
 	}
 	
-	private var countdown:Int = Value.TURN_TIME;
 	public function onEnterFrame (e:Event):Void
 	{
-		if (gameState == Value.GAMESTATE_END)
-		{
-			removeEventListener (Event.ENTER_FRAME, onEnterFrame);
-			return;
-		}
-		
-		if (-- countdown > 0) return;
-		countdown = Value.TURN_TIME;
-		
-		
-		switch (turn)
-		{
-			case Value.TURN_PLAYER_1:
-			if (board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1_TRAIL))
-			{
-				player1.move ();
-				if (board.block (player1.x, player1.y, Value.BLOCK_PLAYER_1))
-					turn = Value.TURN_PLAYER_2;
-				else
-					gameState = Value.GAMESTATE_END;
-			}
-			else
-				gameState = Value.GAMESTATE_END;
-			
-			case Value.TURN_PLAYER_2:
-			// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2_TRAIL))
-			// {
-				// player2.move ();
-				// if (board.block (player2.x, player2.y, Value.BLOCK_PLAYER_2))
-					turn = Value.TURN_PLAYER_1;
-				// else
-					// gameState = Value.GAMESTATE_END;
-			// }
-			// else
-				// gameState = Value.GAMESTATE_END;
-		}
 	}
 }

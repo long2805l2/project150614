@@ -7,80 +7,59 @@ import openfl.display.DisplayObject;
 
 class Board extends Sprite
 {
-	public function new ()
+	public var mapWidth:Int;
+	public var mapHeight:Int;
+	public var blockSize:Float;
+	
+	private var _blocks:Map<String, Block>;
+	
+	public function new (width:Int, height:Int, size:Float = 50)
 	{
 		super ();
 		
-		Value.board = [];
-		for (x in 0 ... Value.MAP_SIZE)
+		this.mapWidth = width;
+		this.mapHeight = height;
+		this.blockSize = size;
+		
+		_blocks = new Map <String, Block> ();
+		
+		for (x in 0 ... mapWidth)
+			this.addChild (new Label ("" + x, Fonts.BLACK_20, x * blockSize, -blockSize, Anchor.CENTER_CENTER));
+		
+		for (y in 0 ... mapHeight)
+			this.addChild (new Label ("" + y, Fonts.BLACK_20, -blockSize, y * blockSize, Anchor.CENTER_CENTER));
+		
+		for (x in 0 ... mapWidth)
 		{
-			Value.board [x] = [];
-			for (y in 0 ... Value.MAP_SIZE)
+			for (y in 0 ... mapHeight)
 			{
-				Value.board [x][y] = 0;
-				var block:Block = new Block ();
-				block.x = Value.BLOCK_SIZE * x;
-				block.y = Value.BLOCK_SIZE * y;
-				block.name = x + "_" + y;
+				var name:String = x + "_" + y;
 				
+				var block:Block = new Block (0xFFFFFF, "", blockSize);
+				block.x = blockSize * x;
+				block.y = blockSize * y;
+				block.name = name;
+				
+				_blocks.set (name, block);
 				this.addChild (block);
 			}
 		}
 	}
 	
-	public function newGame (player1:Player, player2:Player):Void
+	public function draw (data:Array<Array<Int>>):Void
 	{
-		for (x in 0 ... Value.MAP_SIZE)
-		{
-			for (y in 0 ... Value.MAP_SIZE)
-			{
-				Value.board [x][y] = Value.BLOCK_EMPTY;
-				block (x, y, Value.BLOCK_EMPTY);
-			}
-		}
-
-		block (player1.x, player1.y, Value.BLOCK_PLAYER_1);
-		block (player2.x, player2.y, Value.BLOCK_PLAYER_2);
-		
-		var obstacle:Int = 5 + Std.random (20);
-		while (obstacle > 0)
-		{
-			var x = Std.random (Value.MAP_SIZE);
-			var y = Std.random (Value.MAP_SIZE);
-			
-			if (Value.board [x][y] != Value.BLOCK_EMPTY)
-				continue;
-			
-			block (x, y, Value.BLOCK_OBSTACLE);
-			obstacle -= 1;
-		}
+		for (x in 0 ... mapWidth)
+			for (y in 0 ... mapHeight)
+				block (x, y, data [x][y]);
 	}
 	
-	public function block (x:Int, y:Int, status:Int):Bool
+	public function block (x:Int, y:Int, color:Int = 0, text:String = ""):Void
 	{
-		var obj:DisplayObject = getChildByName (x + "_" + y);
-		if (obj == null) return false;
-		
-		var block:Block = cast (obj, Block);
-		if (block == null) return false;
-		
-		var blockState = Value.board [x][y];
-		switch (blockState)
+		var block:Block = _blocks.get (x + "_" + y);
+		if (block != null)
 		{
-			case Value.BLOCK_EMPTY:
-			
-			case Value.BLOCK_PLAYER_1:
-			if (status != Value.BLOCK_PLAYER_1_TRAIL) return false;
-			
-			case Value.BLOCK_PLAYER_2:
-			if (status != Value.BLOCK_PLAYER_2_TRAIL) return false;
-			
-			default:
-			return false;
+			block.color = color;
+			block.text = text;
 		}
-		
-		block.status = status;
-		Value.board [x][y] = status;
-		return true;
 	}
 }

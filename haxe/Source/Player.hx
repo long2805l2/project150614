@@ -2,99 +2,69 @@ package;
 
 class Player
 {
-	public var id:Int;
+	private var myPosition:Position;
+	private var enemyPosition:Position;
+	private var board:Array<Array<Int>>;
 	
-	public var position:Position;
+	public var position (get, null):Position;
 	public var x (get, set):Int;
 	public var y (get, set):Int;
+	public var id:Int;
 	
-	private var zone:Array<Array<Int>>;
-	
-	public function new (id:Int)
+	public function new (playId:Int)
 	{
-		this.position = new Position ();
-		this.id = id;
-		
-		zone = [];
-		for (x in 0 ... Value.MAP_SIZE)
-		{
-			zone [x] = [];
-			for (y in 0 ... Value.MAP_SIZE)
-				zone [x][y] = Value.BLOCK_EMPTY;
-		}
+		id = playId;
+		myPosition = new Position ();
+		enemyPosition = new Position ();
+		board = [];
+	}
+	
+	private function get_position ():Position
+	{
+		return new Position (x, y);
 	}
 	
 	private function get_x ():Int
 	{
-		return position.x;
+		return myPosition.x;
 	}
 	
 	private function set_x (value:Int):Int
 	{
-		return position.x = value;
+		return myPosition.x = value;
 	}
 	
 	private function get_y ():Int
 	{
-		return position.y;
+		return myPosition.y;
 	}
 	
 	private function set_y (value:Int):Int
 	{
-		return position.y = value;
+		return myPosition.y = value;
 	}
 	
-	private function clone ():Void
+	public function update (enemyPosition, board):Void
 	{
-		for (x in 0 ... Value.MAP_SIZE)
-		{
-			for (y in 0 ... Value.MAP_SIZE)
-			{
-				switch (Value.board [x][y])
-				{
-					case Value.BLOCK_EMPTY:
-					zone [x][y] = 0;
-					
-					default:
-					zone [x][y] = -1;
-				}
-			}
-		}
+		this.myPosition.x = myPosition.x;
+		this.myPosition.y = myPosition.y;
+		this.enemyPosition.x = enemyPosition.x;
+		this.enemyPosition.y = enemyPosition.y;
+		this.board = board;
 	}
 	
-	public function move ():Void
+	public function myTurn ():Int
 	{
-		var suitableDir:Array<Int> = suitable (x, y, Value.board);
-		var selection:Int = Std.random (suitableDir.length);
-		command (suitableDir [selection]);
+		return 0;
 	}
 	
-	private function suitable (x:Int, y:Int, data:Array<Array<Int>>):Array<Int>
-	{
-		var suitableDir:Array<Int> = [];
-		
-		if (x > 0 && data [x-1][y] == Value.BLOCK_EMPTY)
-			suitableDir.push (Value.DIRECTION_LEFT);
-		
-		if (y > 0 && data [x][y-1] == Value.BLOCK_EMPTY)
-			suitableDir.push (Value.DIRECTION_UP);
-		
-		if (x < Value.MAP_SIZE - 1 &&  data [x+1][y] == Value.BLOCK_EMPTY)
-			suitableDir.push (Value.DIRECTION_RIGHT);
-		
-		if (y < Value.MAP_SIZE - 1 && data [x][y+1] == Value.BLOCK_EMPTY)
-			suitableDir.push (Value.DIRECTION_DOWN);
-		
-		return suitableDir;
-	}
-	
-	private function command (dir:Int):Void
+	public function move (dir:Int)
 	{
 		switch (dir)
 		{
-			case Value.DIRECTION_LEFT:		x -= 1;			
-			case Value.DIRECTION_UP:		y -= 1;			
-			case Value.DIRECTION_RIGHT:		x += 1;			
+			case Value.DIRECTION_LEFT:		x -= 1;
+			case Value.DIRECTION_UP:		y -= 1;
+			case Value.DIRECTION_RIGHT:		x += 1;
 			case Value.DIRECTION_DOWN:		y += 1;
 		}
 	}

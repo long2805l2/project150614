@@ -1,6 +1,6 @@
 package;
 
-import openfl.display.Sprite;
+import flash.display.Sprite;
 
 class Block extends Sprite
 {

@@ -14,12 +14,12 @@ class Value
 	public static var TURN_PLAYER_1:Int = 1;
 	public static var TURN_PLAYER_2:Int = 2;
 	
-	public static var BLOCK_EMPTY:Int = 0;
-	public static var BLOCK_PLAYER_1:Int = 1;
-	public static var BLOCK_PLAYER_1_TRAIL:Int = 2;
-	public static var BLOCK_PLAYER_2:Int = 3;
-	public static var BLOCK_PLAYER_2_TRAIL:Int = 4;
-	public static var BLOCK_OBSTACLE:Int = 5;
+	public static var BLOCK_EMPTY:Int = 0xFFFFFF;
+	public static var BLOCK_PLAYER_1:Int = 0x00FF00;
+	public static var BLOCK_PLAYER_1_TRAIL:Int = 0x007700;
+	public static var BLOCK_PLAYER_2:Int = 0xFF0000;
+	public static var BLOCK_PLAYER_2_TRAIL:Int = 0x770000;
+	public static var BLOCK_OBSTACLE:Int = 0x777777;
 	
 	public static var DIRECTION_LEFT:Int = 1;
 	public static var DIRECTION_UP:Int = 2;

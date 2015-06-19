@@ -1,14 +1,18 @@
 package;
 
-import openfl.events.Event;
-import openfl.events.MouseEvent;
-import openfl.display.Sprite;
-import openfl.display.DisplayObject;
+import flash.events.Event;
+import flash.events.MouseEvent;
+import flash.display.Sprite;
+import flash.display.DisplayObject;
 
 class Main extends Sprite
 {
 	public var board:Board = null;
 	public var game:Game = null;
+	
+	private var randomBtn:Button;
+	private var resetBtn:Button;
+	private var controlBtn:Button;
 	
 	public function new ()
 	{
@@ -20,44 +24,76 @@ class Main extends Sprite
 		board.y = 70;
 		addChild (board);
 		
-		var randomBtn:Button = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">New Map</font>", 160, 40);
+		randomBtn = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">New Map</font>", 160, 40);
 		randomBtn.x = 700;
 		randomBtn.y = 70;
 		randomBtn.addEventListener (MouseEvent.CLICK, onRandom);
 		addChild (randomBtn);
 		
-		var resetBtn:Button = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Reset</font>", 160, 40);
+		resetBtn = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Reset</font>", 160, 40);
 		resetBtn.x = 700;
 		resetBtn.y = 70 + 40 + 10;
 		resetBtn.addEventListener (MouseEvent.CLICK, onReset);
 		addChild (resetBtn);
 		
-		var controlBtn:Button = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Play</font>", 160, 40);
+		controlBtn = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Play</font>", 160, 40);
 		controlBtn.x = 700;
 		controlBtn.y = 70 + 40 + 10 + 40 + 10;
+		controlBtn.name = "play";
 		controlBtn.addEventListener (MouseEvent.CLICK, onControl);
 		addChild (controlBtn);
+		
+		addEventListener (Event.ENTER_FRAME, onEnterFrame);
 	}
 
 	public function onControl (e:MouseEvent):Void
 	{
+		trace ("onControl");
+		if (game == null) return;
+		
+		switch (controlBtn.name)
+		{
+			case "play":
+			game.start (new Bot (Value.TURN_PLAYER_1), new Bot (Value.TURN_PLAYER_2));
+			controlBtn.name = "pause";
+			controlBtn.text = "<font color=\"#FFFFFF\">Pause</font>";
+			
+			case "pause":
+			game.pause ();
+			controlBtn.name = "continue";
+			controlBtn.text = "<font color=\"#FFFFFF\">Continue</font>";
+			
+			case "continue":
+			game.play ();
+			controlBtn.name = "pause";
+			controlBtn.text = "<font color=\"#FFFFFF\">Pause</font>";
+		}
 	}
 
 	public function onRandom (e:MouseEvent):Void
 	{
 		game = new Game (Value.MAP_SIZE, Value.OBSTACLES);
-		// board.draw (game.colors);
-		
-		for (x in 0 ... Value.MAP_SIZE)
-			for (y in 0 ... Value.MAP_SIZE)
-				board.block (x, y, Value.BLOCK_COLORS [game.board [x][y]], "");
+		board.draw (game.getBoard ());
 	}
 
 	public function onReset (e:MouseEvent):Void
 	{
+		if (game != null) game.reset ();
+		
+		controlBtn.name = "play";
+		controlBtn.text = "<font color=\"#FFFFFF\">Play</font>";
 	}
 	
+	private var timer:Int = Value.TURN_TIME;
 	public function onEnterFrame (e:Event):Void
 	{
+		if (game != null)
+		{
+			if (timer-- > 0) return;
+			timer = Value.TURN_TIME;
+			
+			game.update ();
+			board.draw (game.board);
+		}
 	}
 }

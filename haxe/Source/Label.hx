@@ -10,7 +10,6 @@ import flash.display.Graphics;
 import flash.display.Sprite;
 
 import flash.Vector;
-import openfl.Assets;
 
 import flash.text.Font;
 import flash.text.TextField;

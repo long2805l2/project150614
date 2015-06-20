@@ -43,31 +43,6 @@ class AI extends Player
 			return 0;
 		}
 		
-		var find = function (list:Array<Dynamic>, p:Position):Bool
-		{
-			for (v in list)
-				if (v.p.x == p.x && v.p.y == p.y)
-					return true;
-			return false;
-		}
-		
-		var updatePoint = function (list:Array<Dynamic>, p:Position, g:Float, h:Float):Void
-		{
-			for (v in list)
-			{
-				if (v.p.x == p.x && v.p.y == p.y)
-				{
-					if (v.f > g + h)
-					{
-						v.g = g;
-						v.h = h;
-						v.f = g + h;
-					}
-					break;
-				}
-			}
-		}
-		
 		var getMoves = function (data:Array<Array<Int>>, x:Int, y:Int):Array<Position>
 		{
 			var suitableDir:Array<Position> = [];
@@ -122,8 +97,10 @@ class AI extends Player
 				if (node.p.x == goal.x && node.p.y == goal.y) break;
 				
 				var nears:Array<Position> = getMoves (zone, node.p.x, node.p.y);
-				for (neighbor in nears)
+				while (nears.length > 0)
 				{
+					var neighbor:Position = nears [Std.random (nears.length)];
+					nears.remove (neighbor);
 					var nNode:Dynamic = getNode (neighbor);
 					if (nNode == null)
 					{
@@ -181,8 +158,8 @@ class AI extends Player
 		return path;
 	}
 	
-	private function backTrace ():Array<Position>
-	{
+	// private function backTrace ():Array<Position>
+	// {
 		
-	}
+	// }
 }

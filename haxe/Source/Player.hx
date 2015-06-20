@@ -68,4 +68,8 @@ class Player
 			case Value.DIRECTION_DOWN:		y += 1;
 		}
 	}
+	
+	public function debug (board:Board):Void
+	{
+	}
 }

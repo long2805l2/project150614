@@ -155,4 +155,9 @@ class Game
 			case Value.GAMESTATE_END:
 		}
 	}
+	
+	public function debug (board:Board):Void
+	{
+		// if (player1 != null) player1.debug (board);
+	}
 }

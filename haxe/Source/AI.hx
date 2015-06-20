@@ -7,7 +7,7 @@ class AI extends Player
 		if (path == null)
 		{
 			path = createPath ();
-			path.shift ();
+			// path.shift ();
 		}
 		
 		if (path.length == 0) return -1;
@@ -24,6 +24,7 @@ class AI extends Player
 	}
 	
 	private var path:Array<Position>;
+	private var debugSign:Array<Dynamic>;
 	private function createPath ():Array<Position>
 	{
 		var heuristic = function (x1:Int, y1:Int, x2:Int, y2:Int):Float
@@ -35,6 +36,10 @@ class AI extends Player
 		{
 			if (a.f < b.f) return -1;
 			if (a.f > b.f) return 1;
+			if (a.g < b.g) return -1;
+			if (a.g > b.g) return 1;
+			if (a.h < b.h) return -1;
+			if (a.h > b.h) return 1;
 			return 0;
 		}
 		
@@ -52,9 +57,13 @@ class AI extends Player
 			{
 				if (v.p.x == p.x && v.p.y == p.y)
 				{
-					v.g = g;
-					v.h = h;
-					v.f = g + h;
+					if (v.f > g + h)
+					{
+						v.g = g;
+						v.h = h;
+						v.f = g + h;
+					}
+					break;
 				}
 			}
 		}
@@ -62,58 +71,81 @@ class AI extends Player
 		var getMoves = function (data:Array<Array<Int>>, x:Int, y:Int):Array<Position>
 		{
 			var suitableDir:Array<Position> = [];
-			// trace ("getMoves: " + x + ", " + y);
-			// trace ("data [" + (x - 1) + "][" + y + "]: " + (data[x - 1] != null ? data [x - 1][y] : -1));
-			// trace ("data [" + x + "][" + (y - 1) + "]: " + (data[x] != null ? data [x][y - 1] : -1));
-			// trace ("data [" + (x + 1) + "][" + y + "]: " + (data[x + 1] != null ? data [x + 1][y] : -1));
-			// trace ("data [" + x + "][" + (y + 1) + "]: " + (data[x] != null ? data [x][y + 1] : -1));
-			if (x > 0 && data [x - 1][y] == Value.BLOCK_EMPTY) 					suitableDir.push (new Position (x - 1, y));
-			if (y > 0 && data [x][y - 1] == Value.BLOCK_EMPTY) 					suitableDir.push (new Position (x, y - 1));
-			if (x < Value.MAP_SIZE - 1 && data [x + 1][y] == Value.BLOCK_EMPTY)	suitableDir.push (new Position (x + 1, y));
-			if (y < Value.MAP_SIZE - 1 && data [x][y + 1] == Value.BLOCK_EMPTY)	suitableDir.push (new Position (x, y + 1));
-			// trace ("suitableDir: " + suitableDir);
+			if (y < Value.MAP_SIZE - 1 && data [x][y + 1] == Value.BLOCK_EMPTY)
+				suitableDir.push (new Position (x, y + 1));
+				
+			if (x < Value.MAP_SIZE - 1 && data [x + 1][y] == Value.BLOCK_EMPTY)
+				suitableDir.push (new Position (x + 1, y));
+			
+			if (x > 0 && data [x - 1][y] == Value.BLOCK_EMPTY)
+				suitableDir.push (new Position (x - 1, y));
+			
+			if (y > 0 && data [x][y - 1] == Value.BLOCK_EMPTY)
+				suitableDir.push (new Position (x, y - 1));
+			
 			return suitableDir;
 		}
 		
-		var sign:Array<Array<Bool>> = [];
-		var pathFinding = function (zone:Array<Array<Int>>, start:Position, goal:Position):Array<Position>
+		var sign:Array<Array<Dynamic>> = [];
+		var newNode = function (p:Position, g:Float, h:Float, parent:Position):Dynamic
 		{
-			var openList:Array<Dynamic> = [];
-			var closeList:Array<Dynamic> = [];
+			return { p:p, g:g, h:h, f:g + h, parent:parent, closed:false, opened:false };
+		};
+		
+		var addNode = function (node:Dynamic):Void
+		{
+			if (sign [node.p.x] == null) sign [node.p.x] = [];
+			sign [node.p.x][node.p.y] = node;
+			if (node.parent == null)
+				trace (haxe.CallStack.toString (haxe.CallStack.callStack ()));
+		};
+		
+		var getNode = function (p:Position):Dynamic
+		{
+			if (sign [p.x] == null) return null;
+			return sign [p.x][p.y];
+		};
+		
+		var pathFinding = function (zone:Array<Array<Int>>, start:Position, goal:Position):Void
+		{
+			var startNode:Dynamic = newNode (start, 0, heuristic (start.x, start.y, goal.x, goal.y), null);
+			startNode.opened = true;
+			addNode (startNode);
 			
-			openList.push ({p:start, f:0, g:0, h:0});
-			do
+			var openList:Array<Dynamic> = [startNode];
+			while (openList.length > 0)
 			{
 				openList.sort (sort);
-				var current:Dynamic = openList.shift ();
-				trace ("current: " + current);
+				var node:Dynamic = openList.shift ();
+				node.closed = true;
 				
-				closeList.push (current);
-				trace ("find (closeList, goal): " + find (closeList, goal));
-				if (find (closeList, goal)) break;
+				if (node.p.x == goal.x && node.p.y == goal.y) break;
 				
-				var moves:Array<Position> = getMoves (zone, current.p.x, current.p.y);
-				trace ("moves: " + moves);
-				for (move in moves)
+				var nears:Array<Position> = getMoves (zone, node.p.x, node.p.y);
+				for (neighbor in nears)
 				{
-					trace ("-find (closeList, " + move + "): " + find (closeList, move));
-					if (find (closeList, move)) continue;
-
-					var g:Float = current.g + 1;
-					var h:Float = heuristic (move.x, move.y, goal.x, goal.y);
-					trace ("--g: " + g);
-					trace ("--h: " + h);
-					if (!find (openList, move))
-						openList.push ({p:move, f:g + h, g:g, h:h});
-					else
-						updatePoint (openList, move, g, h);
+					var nNode:Dynamic = getNode (neighbor);
+					if (nNode == null)
+					{
+						nNode = newNode (neighbor, node.g + 1, heuristic (node.p.x, node.p.y, goal.x, goal.y), node.p);
+						addNode (nNode);
+					}
+					
+					if (nNode.closed) continue;
+					if (!nNode.opened)
+					{
+						openList.push(nNode);
+						nNode.opened = true;
+					}
+					else if (node.g + 1 < nNode.g)
+					{
+						nNode.g = node.g + 1;
+						nNode.h = heuristic (node.p.x, node.p.y, goal.x, goal.y);
+						nNode.f = nNode.g + nNode.h;
+						nNode.parent = node.p;
+					}
 				}
 			}
-			while (openList.length > 0);
-			
-			// trace ("closeList: " + closeList.length);
-			var temp:Array<Position> = [for (m in closeList) m.p];
-			return temp;
 		};
 		
 		var zone:Array<Array<Int>> = [];
@@ -129,6 +161,28 @@ class AI extends Player
 			}
 		}
 		zone [this.x][this.y] = Value.BLOCK_EMPTY;
-		return pathFinding (zone, myPosition, enemyPosition);
+		zone [enemyPosition.x][enemyPosition.y] = Value.BLOCK_EMPTY;
+		pathFinding (zone, myPosition, enemyPosition);
+		
+		var goalNode:Dynamic = getNode (enemyPosition);
+		debugSign = sign;
+		
+		if (goalNode == null)
+			return [myPosition];
+		
+		var path:Array<Position> = [];
+		var current:Dynamic = goalNode;
+		while (current != null && current.parent != null)
+		{
+			path.unshift (current.p);
+			current = getNode (current.parent);
+		}
+		
+		return path;
+	}
+	
+	private function backTrace ():Array<Position>
+	{
+		
 	}
 }

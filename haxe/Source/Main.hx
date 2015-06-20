@@ -60,8 +60,10 @@ class Main extends Sprite
 			
 			case "pause":
 			game.pause ();
+			game.debug (board);
 			controlBtn.name = "continue";
 			controlBtn.text = "<font color=\"#FFFFFF\">Continue</font>";
+			timer = Value.TURN_TIME;
 			
 			case "continue":
 			game.play ();
@@ -74,6 +76,9 @@ class Main extends Sprite
 	{
 		game = new Game (Value.MAP_SIZE, Value.OBSTACLES);
 		board.draw (game.getBoard ());
+		
+		controlBtn.name = "play";
+		controlBtn.text = "<font color=\"#FFFFFF\">Play</font>";
 	}
 
 	public function onReset (e:MouseEvent):Void

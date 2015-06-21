@@ -26,45 +26,7 @@ class AI extends Player
 	private var path:Array<Position>;
 	private function extendPath (data:Array<Array<Int>>, start:Position):Array<Position>
 	{
-		var valids:Array<Position> = getMoves (data, start.x, start.y);		
-		var path:Array<Position> = [];
-		while (valids.length < 2)
-		{
-			path.push (start);			
-			if (valids.length == 0) return path;
-			
-			data [start.x][start.y] = Value.BLOCK_OBSTACLE;
-			data [start.x][start.y] = Value.BLOCK_OBSTACLE;//Value.BLOCK_EMPTY;
-			
-			start = valids [0];
-			valids = getMoves (data, start.x, start.y);
-		}
-		path.push (start);
-		trace ("path: " + path);
-		trace ("valids: " + valids);
 		
-		var validPaths:Array<Position> = [];
-		for (i in 0 ... valids.length - 1)
-		{
-			for (j in i + 1 ... valids.length)
-			{
-				var newPaths:Array<Position> = createPath (data, valids [i], valids [j]);
-				newPaths.unshift (valids [i]);
-				if (newPaths.length > validPaths.length)
-					validPaths = newPaths;
-			}
-		}
-		
-		while (validPaths.length > 0)
-		{
-			for (move in validPaths)
-			{
-				path.push (move);
-				data [move.x][move.y] = Value.BLOCK_OBSTACLE;
-			}
-			
-			
-		}
 		return path;
 	}
 	

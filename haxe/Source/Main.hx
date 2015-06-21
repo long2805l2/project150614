@@ -54,7 +54,7 @@ class Main extends Sprite
 		switch (controlBtn.name)
 		{
 			case "play":
-			game.start (new AI (Value.TURN_PLAYER_1), new AI1 (Value.TURN_PLAYER_2));
+			game.start (new Tron (Value.TURN_PLAYER_1), new Tron (Value.TURN_PLAYER_2));
 			controlBtn.name = "pause";
 			controlBtn.text = "<font color=\"#FFFFFF\">Pause</font>";
 			

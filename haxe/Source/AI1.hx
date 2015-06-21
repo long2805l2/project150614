@@ -73,10 +73,8 @@ class AI1 extends Player
 			for (position in q)
 			{
 				var validMoves:Array<Position> = allValidMoves [position.x][position.y];
-				trace ("position: " + position + " >> " + validMoves);
 				for (move in validMoves)
 				{
-					trace ("--move (" + move.x + ", " + move.y + "): " + data [move.x][move.y]);
 					if (data [move.x][move.y] != 0) continue;
 					data [move.x][move.y] = dist;
 					q2.push (move);

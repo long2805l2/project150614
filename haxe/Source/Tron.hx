@@ -70,8 +70,8 @@ class Tron extends Player
 			{
 				if (board [x][y] != Value.BLOCK_EMPTY) continue;
 				
-				if (p1dist [x][y] > 1) {
-					if (p2dist [x][y] < 1)
+				if (p2dist [x][y] < 1) {
+					if (p1dist [x][y] > 1)
 					{
 						p1score ++;
 						score ++;
@@ -79,8 +79,8 @@ class Tron extends Player
 					continue;
 				}
 				
-				if (p2dist [x][y] > 1) {
-					if (p1dist [x][y] < 1)
+				if (p1dist [x][y] < 1) {
+					if (p2dist [x][y] > 1)
 					{
 						p2score ++;
 						score --;

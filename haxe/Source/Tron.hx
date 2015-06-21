@@ -9,7 +9,7 @@ class Tron extends Player
 		nextMove = null;
 		trace ("");
 		trace ("myTurn: " + id);
-		var score = negamax (myPosition, enemyPosition, 6, -1e6, 1e6);
+		var score = negamax (myPosition, enemyPosition, 10, -1e6, 1e6);
 		trace ("score: " + score + " >> " + myPosition + " >> " + nextMove);
 		if (nextMove == null) return 0;
 		
@@ -62,8 +62,8 @@ class Tron extends Player
 		var p2dist:Array<Array<Int>> = floodfill (board, enemy);
 		
 		var score:Int = 0;
-		var p1score:Int = 0;
-		var	p2score:Int = 0;
+		// var p1score:Int = 0;
+		// var	p2score:Int = 0;
 		for (x in 0 ... board.length)
 		{
 			for (y in 0 ... board [x].length)
@@ -72,37 +72,37 @@ class Tron extends Player
 				
 				if (p2dist [x][y] < 1) {
 					if (p1dist [x][y] > 1)
-					{
-						p1score ++;
+					// {
+						// p1score ++;
 						score ++;
-					}
+					// }
 					continue;
 				}
 				
 				if (p1dist [x][y] < 1) {
 					if (p2dist [x][y] > 1)
-					{
-						p2score ++;
+					// {
+						// p2score ++;
 						score --;
-					}
+					// }
 					continue;
 				}
 				
 				var d = p1dist [x][y] - p2dist [x][y];
 				if (d > 0)
-				{
-					p2score ++;
+				// {
+					// p2score ++;
 					score --;
-				}
+				// }
 				else if (d < 0)
-				{
-					p1score ++;
+				// {
+					// p1score ++;
 					score ++;
-				}
+				// }
 			}
 		}
 		
-		trace (id + " evaluate_pos: " + score + " >> " + p1score + "/" + p2score);
+		// trace (id + " evaluate_pos: " + score + " >> " + p1score + "/" + p2score);
 		return score;
 	}
 	

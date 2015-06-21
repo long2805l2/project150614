@@ -2,9 +2,10 @@ package;
 
 class AI1 extends Player
 {
+	private var zone:Array<Array<Int>>;
 	override public function myTurn ():Int
 	{
-		var zone:Array<Array<Int>> = [];
+		zone = [];
 		for (x in 0 ... board.length)
 		{
 			zone [x] = [];
@@ -19,18 +20,7 @@ class AI1 extends Player
 		zone [this.x][this.y] = 0;
 		
 		var func = null;
-		func = function (data:Array<Array<Int>>, x:Int, y:Int, move:Int)
-		{
-			if (data [x][y] != 0 && data [x][y] < move) return;
-			
-			data [x][y] = move;
-			
-			if (x > 0) func (data, x - 1, y, move + 1);
-			if (y > 0) func (data, x, y - 1, move + 1);
-			if (x < Value.MAP_SIZE - 1) func (data, x + 1, y, move + 1);
-			if (y < Value.MAP_SIZE - 1) func (data, x, y + 1, move + 1);
-		};
-		func (zone, x, y, 1);
+		floodfill (zone, x, y);
 		
 		var max:Int = -1;
 		var maxX:Int = -1;
@@ -66,5 +56,39 @@ class AI1 extends Player
 		else if (this.y + 1 == maxY)		dir = Value.DIRECTION_DOWN;
 		
 		return dir;
+	}
+	
+	public function floodfill (data:Array<Array<Int>>, x:Int, y:Int):Void
+	{
+		var q:Array<Position> = [new Position (x, y)];
+		var q2:Array<Position> = [];
+		data [x][y] = 1;
+		var dist:Int = 1;
+		
+		while (q.length > 0)
+		{
+			dist++;
+			for (position in q)
+			{
+				var validMoves:Array<Position> = [];
+				if (position.x > 0 && data [position.x - 1][position.y] == 0) 					validMoves.push (new Position (position.x - 1, position.y));
+				if (position.y > 0 && data [position.x][position.y - 1] == 0) 					validMoves.push (new Position (position.x, position.y - 1));
+				if (position.x < Value.MAP_SIZE - 1 && data [position.x + 1][position.y] == 0)	validMoves.push (new Position (position.x + 1, position.y));
+				if (position.y < Value.MAP_SIZE - 1 && data [position.x][position.y + 1] == 0)	validMoves.push (new Position (position.x, position.y + 1));
+				for (move in validMoves)
+				{
+					data [move.x][move.y] = dist;
+					q2.push (move);
+				}
+			}
+			q = q2; q2 = [];
+		}
+	}
+	
+	override public function debug (board:Board):Void
+	{
+		for (x in 0 ... zone.length)
+			for (y in 0 ... zone [x].length)
+				board.block (x, y, -1, "" + zone [x][y]);
 	}
 }

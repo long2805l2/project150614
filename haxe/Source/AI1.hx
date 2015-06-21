@@ -5,6 +5,8 @@ class AI1 extends Player
 	private var zone:Array<Array<Int>>;
 	override public function myTurn ():Int
 	{
+		if (allValidMoves == null) createVaildMoves ();
+		
 		zone = [];
 		for (x in 0 ... board.length)
 		{
@@ -70,18 +72,36 @@ class AI1 extends Player
 			dist++;
 			for (position in q)
 			{
-				var validMoves:Array<Position> = [];
-				if (position.x > 0 && data [position.x - 1][position.y] == 0) 					validMoves.push (new Position (position.x - 1, position.y));
-				if (position.y > 0 && data [position.x][position.y - 1] == 0) 					validMoves.push (new Position (position.x, position.y - 1));
-				if (position.x < Value.MAP_SIZE - 1 && data [position.x + 1][position.y] == 0)	validMoves.push (new Position (position.x + 1, position.y));
-				if (position.y < Value.MAP_SIZE - 1 && data [position.x][position.y + 1] == 0)	validMoves.push (new Position (position.x, position.y + 1));
+				var validMoves:Array<Position> = allValidMoves [position.x][position.y];
+				trace ("position: " + position + " >> " + validMoves);
 				for (move in validMoves)
 				{
+					trace ("--move (" + move.x + ", " + move.y + "): " + data [move.x][move.y]);
+					if (data [move.x][move.y] != 0) continue;
 					data [move.x][move.y] = dist;
 					q2.push (move);
 				}
 			}
 			q = q2; q2 = [];
+		}
+	}
+	
+	private var allValidMoves:Array<Array<Array<Position>>>;
+	private function createVaildMoves ():Void
+	{
+		allValidMoves = [];
+		for (x in 0 ... board.length)
+		{
+			allValidMoves [x] = [];
+			for (y in 0 ... board [x].length)
+			{
+				allValidMoves [x][y] = [];
+				if (board [x][y] == Value.BLOCK_OBSTACLE) continue;
+				if (x > 0 && board [x - 1][y] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (new Position (x - 1, y));
+				if (y > 0 && board [x][y - 1] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (new Position (x, y - 1));
+				if (x < Value.MAP_SIZE - 1 && board [x + 1][y] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x + 1, y));
+				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x, y + 1));
+			}
 		}
 	}
 	

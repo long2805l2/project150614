@@ -152,20 +152,81 @@ class Tron extends Player
 	
 	override function debug (canvas:Board):Void
 	{
+		trace ("debug: " + id);
+		if (allValidMoves == null) createVaildMoves ();
+		
 		var data:Array<Array<Int>> = [];
-		for (x in 0 ... map.length)
+		for (x in 0 ... board.length)
 		{
 			data [x] = [];
-			for (y in 0 ... map [x].length)
-				data [x][y] = (map [x][y] == Value.BLOCK_EMPTY) ? 0 : -1;
+			for (y in 0 ... board [x].length)
+				data [x][y] = (board [x][y] == Value.BLOCK_EMPTY) ? 0 : (-1000);
 		}
+		data [myPosition.x][myPosition.y] = 1000;
+		data [enemyPosition.x][enemyPosition.y] = 2000;
 		
 		var myZone:Array<Position> = [myPosition];
 		var enemyZone:Array<Position> = [enemyPosition];
-		while (myZone.length == 0 || enemyZone.length == 0)
+		
+		var myRound:Int = 1;
+		var myValue:Int = 1;
+		var enemyRound:Int = 1;
+		var enemyValue:Int = 1;
+		var current:Position = null;
+		var temp:Array<Position> = null;
+		while (myZone.length != 0 || enemyZone.length != 0)
 		{
-			var temp:Array<Position> = [];
-			
+			temp = [];
+			myRound ++;
+			while (myZone.length > 0)
+			{
+				current = myZone.pop ();
+				for (move in allValidMoves [current.x][current.y])
+				{
+					if (data [move.x][move.y] == 0)
+					{
+						data [move.x][move.y] = 1000 + myRound;
+						temp.push (move);
+						myValue ++;
+					}
+				}
+			}
+			myZone = temp;
+
+			temp = [];
+			enemyRound ++;
+			while (enemyZone.length > 0)
+			{
+				current = enemyZone.pop ();
+				for (move in allValidMoves [current.x][current.y])
+				{
+					if (data [move.x][move.y] == 0)
+					{
+						data [move.x][move.y] = 2000 + enemyRound;
+						temp.push (move);
+						enemyValue ++;
+					}
+				}
+			}
+			enemyZone = temp;
+		}
+		data [myPosition.x][myPosition.y] = myValue;
+		data [enemyPosition.x][enemyPosition.y] = enemyValue;
+		
+		for (x in 0 ... data.length)
+		{
+			for (y in 0 ... data [x].length)
+			{
+				var color:Int = switch (Std.int (data [x][y] / 1000))
+				{
+					case 0:		0xFFFFFF;
+					case 1:		0xFFCCCC;
+					case 2:		0xCCFFCC;
+					default:	0x000000;
+				}
+				
+				canvas.block (x, y, color, "" + (data [x][y] % 1000));
+			}
 		}
 	}
 }

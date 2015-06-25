@@ -152,5 +152,20 @@ class Tron extends Player
 	
 	override function debug (canvas:Board):Void
 	{
+		var data:Array<Array<Int>> = [];
+		for (x in 0 ... map.length)
+		{
+			data [x] = [];
+			for (y in 0 ... map [x].length)
+				data [x][y] = (map [x][y] == Value.BLOCK_EMPTY) ? 0 : -1;
+		}
+		
+		var myZone:Array<Position> = [myPosition];
+		var enemyZone:Array<Position> = [enemyPosition];
+		while (myZone.length == 0 || enemyZone.length == 0)
+		{
+			var temp:Array<Position> = [];
+			
+		}
 	}
 }

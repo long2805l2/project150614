@@ -13,6 +13,7 @@ class Main extends Sprite
 	private var randomBtn:Button;
 	private var resetBtn:Button;
 	private var controlBtn:Button;
+	private var debuglBtn:Button;
 	
 	public function new ()
 	{
@@ -43,6 +44,12 @@ class Main extends Sprite
 		controlBtn.addEventListener (MouseEvent.CLICK, onControl);
 		addChild (controlBtn);
 		
+		debuglBtn = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Debug</font>", 160, 40);
+		debuglBtn.x = 700;
+		debuglBtn.y = 70 + 40 + 10 + 40 + 10 + 40 + 10;
+		debuglBtn.addEventListener (MouseEvent.CLICK, onDebug);
+		addChild (debuglBtn);
+		
 		addEventListener (Event.ENTER_FRAME, onEnterFrame);
 	}
 
@@ -60,7 +67,6 @@ class Main extends Sprite
 			
 			case "pause":
 			game.pause ();
-			game.debug (board);
 			controlBtn.name = "continue";
 			controlBtn.text = "<font color=\"#FFFFFF\">Continue</font>";
 			timer = Value.TURN_TIME;
@@ -87,6 +93,18 @@ class Main extends Sprite
 		
 		controlBtn.name = "play";
 		controlBtn.text = "<font color=\"#FFFFFF\">Play</font>";
+	}
+
+	public function onDebug (e:MouseEvent):Void
+	{
+		trace ("onDebug: " + game);
+		if (game != null)
+		{
+			timer = 0xFFFFFF;
+			
+			if (!game.isPlay ()) onControl (e);
+			game.update (board);
+		}
 	}
 	
 	private var timer:Int = Value.TURN_TIME;

@@ -95,6 +95,11 @@ class Game
 		state = Value.GAMESTATE_COMMENCING;
 	}
 	
+	public function isPlay ():Bool
+	{
+		return state == Value.GAMESTATE_COMMENCING;
+	}
+	
 	public function reset ():Void
 	{
 		for (x in 0 ... mapSize)
@@ -116,7 +121,7 @@ class Game
 		turn = Value.TURN_PLAYER_1;
 	}
 	
-	public function update ():Void
+	public function update (?canvas:Board):Void
 	{
 		switch (state)
 		{
@@ -126,8 +131,9 @@ class Game
 			{
 				case Value.TURN_PLAYER_1:
 					player1.update (player2.position, getBoard ());
-					var dir:Int = player1.myTurn ();
+					if (canvas != null) player1.debug (canvas);
 					
+					var dir:Int = player1.myTurn ();
 					if (validMove (player1.position, dir))
 					{
 						turn = Value.TURN_PLAYER_2;
@@ -140,8 +146,9 @@ class Game
 				
 				case Value.TURN_PLAYER_2:
 					player2.update (player1.position, getBoard ());
-					var dir:Int = player2.myTurn ();
+					if (canvas != null) player2.debug (canvas);
 					
+					var dir:Int = player2.myTurn ();
 					if (validMove (player2.position, dir))
 					{
 						turn = Value.TURN_PLAYER_1;
@@ -154,10 +161,5 @@ class Game
 			}
 			case Value.GAMESTATE_END:
 		}
-	}
-	
-	public function debug (board:Board):Void
-	{
-		// if (player1 != null) player1.debug (board);
 	}
 }

@@ -7,10 +7,7 @@ class Tron extends Player
 		if (allValidMoves == null) createVaildMoves ();
 		
 		nextMove = null;
-		trace ("");
-		trace ("myTurn: " + id);
 		var score = negamax (myPosition, enemyPosition, 10, -1e6, 1e6);
-		trace ("score: " + score + " >> " + myPosition + " >> " + nextMove);
 		if (nextMove == null) return 0;
 		
 		var dir:Int = -1;
@@ -151,5 +148,9 @@ class Tron extends Player
 				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x, y + 1));
 			}
 		}
+	}
+	
+	override function debug (canvas:Board):Void
+	{
 	}
 }

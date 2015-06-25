@@ -58,8 +58,11 @@ class Board extends Sprite
 		var block:Block = _blocks.get (x + "_" + y);
 		if (block != null)
 		{
-			block.color = color;
-			block.text = text;
+			if (color != -1)
+				block.color = color;
+			
+			if (text != "")
+				block.text = text;
 		}
 	}
 }

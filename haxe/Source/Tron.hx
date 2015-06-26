@@ -75,11 +75,9 @@ class Tron extends Player
 		return myValue - enemyValue;
 	}
 	
-	
 	private var nextMove:Position;
 	private function negamax (my:Position, enemy:Position, depth:Int, a:Float, b:Float):Float
 	{
-		// trace ("negamax: " + my + " >> " + depth);
 		if (depth == 0) return evaluate_pos (my, enemy);
 		
 		var moves:Array<Position> = allValidMoves [my.x][my.y];
@@ -96,7 +94,7 @@ class Tron extends Player
 			{
 				a = score;
 				bestMove = move;
-				if(a >= b) break;
+				if (a >= b) break;
 			}
 		}
 		

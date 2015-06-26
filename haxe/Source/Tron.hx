@@ -18,90 +18,63 @@ class Tron extends Player
 		
 		return dir;
 	}
-
-	public function floodfill (map:Array<Array<Int>>, current:Position):Array<Array<Int>>
-	{
-		var q:Array<Position> = [current];
-		var q2:Array<Position> = [];
-		var dist:Int = 1;
-
-		var data:Array<Array<Int>> = [];
-		for (x in 0 ... map.length)
-		{
-			data [x] = [];
-			for (y in 0 ... map [x].length)
-				data [x][y] = (map [x][y] == Value.BLOCK_EMPTY) ? 0 : -1;
-		}
-		
-		data [current.x][current.y] = 1;
-		while (q.length > 0)
-		{
-			dist++;
-			for (position in q)
-			{
-				var validMoves:Array<Position> = allValidMoves [position.x][position.y];
-				for (move in validMoves)
-				{
-					if (data [move.x][move.y] != 0) continue;
-					data [move.x][move.y] = dist;
-					q2.push (move);
-				}
-			}
-			q = q2; q2 = [];
-		}
-		return data;
-	}
 	
 	private function evaluate_pos (my:Position, enemy:Position):Int
 	{
-		// trace ("evaluate_pos");
-		var p1dist:Array<Array<Int>> = floodfill (board, my);
-		var p2dist:Array<Array<Int>> = floodfill (board, enemy);
-		
-		var score:Int = 0;
-		// var p1score:Int = 0;
-		// var	p2score:Int = 0;
+		var data:Array<Array<Int>> = [];
 		for (x in 0 ... board.length)
 		{
+			data [x] = [];
 			for (y in 0 ... board [x].length)
-			{
-				if (board [x][y] != Value.BLOCK_EMPTY) continue;
-				
-				if (p2dist [x][y] < 1) {
-					if (p1dist [x][y] > 1)
-					// {
-						// p1score ++;
-						score ++;
-					// }
-					continue;
-				}
-				
-				if (p1dist [x][y] < 1) {
-					if (p2dist [x][y] > 1)
-					// {
-						// p2score ++;
-						score --;
-					// }
-					continue;
-				}
-				
-				var d = p1dist [x][y] - p2dist [x][y];
-				if (d > 0)
-				// {
-					// p2score ++;
-					score --;
-				// }
-				else if (d < 0)
-				// {
-					// p1score ++;
-					score ++;
-				// }
-			}
+				data [x][y] = (board [x][y] == Value.BLOCK_EMPTY) ? 0 : -1;
 		}
 		
-		// trace (id + " evaluate_pos: " + score + " >> " + p1score + "/" + p2score);
-		return score;
+		var myValue:Int = 1;
+		var myZone:Array<Position> = [my];
+		
+		var enemyValue:Int = 1;
+		var enemyZone:Array<Position> = [enemy];
+		
+		var current:Position = null;
+		var temp:Array<Position> = null;
+		while (myZone.length != 0 || enemyZone.length != 0)
+		{
+			temp = [];
+			while (myZone.length > 0)
+			{
+				current = myZone.pop ();
+				for (move in allValidMoves [current.x][current.y])
+				{
+					if (data [move.x][move.y] == 0)
+					{
+						data [move.x][move.y] = -1;
+						temp.push (move);
+						myValue ++;
+					}
+				}
+			}
+			myZone = temp;
+
+			temp = [];
+			while (enemyZone.length > 0)
+			{
+				current = enemyZone.pop ();
+				for (move in allValidMoves [current.x][current.y])
+				{
+					if (data [move.x][move.y] == 0)
+					{
+						data [move.x][move.y] = -1;
+						temp.push (move);
+						enemyValue ++;
+					}
+				}
+			}
+			enemyZone = temp;
+		}
+		
+		return myValue - enemyValue;
 	}
+	
 	
 	private var nextMove:Position;
 	private function negamax (my:Position, enemy:Position, depth:Int, a:Float, b:Float):Float
@@ -149,8 +122,7 @@ class Tron extends Player
 			}
 		}
 	}
-	
-	override function debug (canvas:Board):Void
+	override public function debug (canvas:Board):Void
 	{
 		trace ("debug: " + id);
 		if (allValidMoves == null) createVaildMoves ();

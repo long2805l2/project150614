@@ -8,7 +8,7 @@ class Tron extends Player
 		
 		nextMove = null;
 		var score = negamax (myPosition, enemyPosition, 10, -1e6, 1e6);
-		if (nextMove == null) return 0;
+		// if (nextMove == null)
 		
 		var dir:Int = -1;
 		if (this.x - 1 == nextMove.x)			dir = Value.DIRECTION_LEFT;
@@ -72,16 +72,23 @@ class Tron extends Player
 			enemyZone = temp;
 		}
 		
+		// trace (my + " vs " + enemy + " >> " + (myValue - enemyValue));
 		return myValue - enemyValue;
 	}
 	
 	private var nextMove:Position;
 	private function negamax (my:Position, enemy:Position, depth:Int, a:Float, b:Float):Float
 	{
-		if (depth == 0) return evaluate_pos (my, enemy);
+		// trace ("negamax [" + depth + "]: " + my + " vs " + enemy + " / " + a + " / " + b);
+		if (depth == 0)
+		{
+			nextMove = my;
+			return evaluate_pos (my, enemy);
+		}
 		
 		var moves:Array<Position> = allValidMoves [my.x][my.y];
 		var bestMove:Position = my;
+		
 		for (move in moves)
 		{
 			if (board [move.x][move.y] != Value.BLOCK_EMPTY) continue;
@@ -90,15 +97,19 @@ class Tron extends Player
 			var score = -negamax (enemy, move, depth - 1, -b, -a);
 			board [move.x][move.y] = Value.BLOCK_EMPTY;
 			
+			// trace ("move: " + move + " >> " + score);
 			if (score > a)
 			{
 				a = score;
 				bestMove = move;
 				if (a >= b) break;
 			}
+			else if (bestMove == my) bestMove = move;
 		}
 		
 		nextMove = bestMove;
+		// trace ("bestMove: " + bestMove);
+		// if (bestMove == my) return b;
 		return a;
 	}
 	

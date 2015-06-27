@@ -35,7 +35,7 @@ class Main extends Sprite
 		resetBtn.x = 700;
 		resetBtn.y = 70 + 40 + 10;
 		resetBtn.addEventListener (MouseEvent.CLICK, onReset);
-		addChild (resetBtn);
+		// addChild (resetBtn);
 		
 		controlBtn = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">Play</font>", 160, 40);
 		controlBtn.x = 700;
@@ -48,7 +48,7 @@ class Main extends Sprite
 		debuglBtn.x = 700;
 		debuglBtn.y = 70 + 40 + 10 + 40 + 10 + 40 + 10;
 		debuglBtn.addEventListener (MouseEvent.CLICK, onDebug);
-		addChild (debuglBtn);
+		// addChild (debuglBtn);
 		
 		addEventListener (Event.ENTER_FRAME, onEnterFrame);
 	}
@@ -61,7 +61,7 @@ class Main extends Sprite
 		switch (controlBtn.name)
 		{
 			case "play":
-			game.start (new AI2 (Value.TURN_PLAYER_1), new Tron (Value.TURN_PLAYER_2));
+			game.start (new Tron (Value.TURN_PLAYER_1), new Tron (Value.TURN_PLAYER_2));
 			controlBtn.name = "pause";
 			controlBtn.text = "<font color=\"#FFFFFF\">Pause</font>";
 			

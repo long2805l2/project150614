@@ -31,10 +31,15 @@ class Game
 			}
 		}
 		
+		var x:Int = -1;
+		var y:Int = -1;
 		for (obstacle in 0 ... obstacles)
 		{
-			var x:Int = Std.random (Value.MAP_SIZE);
-			var y:Int = Std.random (Value.MAP_SIZE);
+			x = Std.random (Value.MAP_SIZE);
+			y = Std.random (Value.MAP_SIZE);
+			
+			// x ++;
+			// y = 1;
 			
 			map [x][y] = Value.BLOCK_OBSTACLE;
 			map [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;

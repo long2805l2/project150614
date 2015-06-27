@@ -265,105 +265,143 @@ function Send(data) {
 
 function MyTurn ()
 {
-	var zone = clone ();
-	var dir = AI_1 (zone, myPosition.x, myPosition.y);
+	var dir = tron ();
 	
 	// console.log ("MyTurn: " + dir);
 	Command (dir);
 }
 
-function clone ()
+var nextMove;
+var allValidMoves;
+
+function tron ()
 {
-	var zone = new Array ();
+	if (allValidMoves == null) createVaildMoves ();
+	
+	nextMove = null;
+	var score = negamax (myPosition, enemyPosition, 10, -1000, 1000);
+	// console.log ("nextMove: " + nextMove.x + ", " + nextMove.y);
+	
+	var dir = -1;
+	if (myPosition.x - 1 == nextMove.x)			dir = DIRECTION_LEFT;
+	else if (myPosition.x + 1 == nextMove.x)	dir = DIRECTION_RIGHT;
+	else if (myPosition.y - 1 == nextMove.y)	dir = DIRECTION_UP;
+	else if (myPosition.y + 1 == nextMove.y)	dir = DIRECTION_DOWN;
+	
+	return dir;
+}
+
+function evaluate_pos (my, enemy)
+{
+	var data = [];
 	for (var x = 0; x < MAP_SIZE; x++)
 	{
-		zone [x] = new Array ();
+		data [x] = [];
 		for (var y = 0; y < MAP_SIZE; y++)
-		{
-			if (board [x][y] == BLOCK_EMPTY)
-				zone [x][y] = 0;
-			else 
-				zone [x][y] = -1;
-		}
+			data [x][y] = (board [x][y] == BLOCK_EMPTY) ? 0 : -1;
 	}
 	
-	// if (enemyPosition.x > 0 && zone [enemyPosition.x - 1][enemyPosition.y] == 0)
-		// zone [enemyPosition.x - 1][enemyPosition.y] = -1;
-		
-	// if (enemyPosition.y > 0 && zone [enemyPosition.x][enemyPosition.y - 1] == 0)
-		// zone [enemyPosition.x][enemyPosition.y - 1] = -1;
-		
-	// if (enemyPosition.x < MAP_SIZE - 1 && zone [enemyPosition.x + 1][enemyPosition.y] == 0)
-		// zone [enemyPosition.x + 1][enemyPosition.y] = -1;
-		
-	// if (enemyPosition.y < MAP_SIZE - 1 && zone [enemyPosition.x][enemyPosition.y + 1] == 0)
-		// zone [enemyPosition.x][enemyPosition.y + 1] = -1;
+	var myValue = 1;
+	var myZone = [my];
 	
-	zone [myPosition.x][myPosition.y] = 0;
+	var enemyValue = 1;
+	var enemyZone = [enemy];
 	
-	// var zoneString = "";
-	// for (var x = 0; x < MAP_SIZE; x++)
-	// {
-		// zoneString += "\n";
-		// for (var y = 0; y < MAP_SIZE; y++)
-			// zoneString += zone[x][y] == 0 ? "." : "O";
-	// }
-	// console.log (zoneString);
+	var current = null;
+	var temp = null;
+	var move = null;
+	var moves = null;
+	var moveId = -1;
+	while (myZone.length != 0 || enemyZone.length != 0)
+	{
+		temp = [];
+		while (myZone.length > 0)
+		{
+			current = myZone.pop ();
+			moves = allValidMoves [current.x][current.y];
+			for (moveId = 0; moveId < moves.length; moveId ++)
+			{
+				move = moves [moveId];
+				if (data [move.x][move.y] == 0)
+				{
+					data [move.x][move.y] = -1;
+					temp.push (move);
+					myValue ++;
+				}
+			}
+		}
+		myZone = temp;
+
+		temp = [];
+		while (enemyZone.length > 0)
+		{
+			current = enemyZone.pop ();
+			moves = allValidMoves [current.x][current.y];
+			for (moveId = 0; moveId < moves.length; moveId ++)
+			{
+				move = moves [moveId];
+				if (data [move.x][move.y] == 0)
+				{
+					data [move.x][move.y] = -1;
+					temp.push (move);
+					enemyValue ++;
+				}
+			}
+		}
+		enemyZone = temp;
+	}
 	
-	return zone;	
+	return myValue - enemyValue;
 }
 
-function func1 (data, x, y, move)
+function negamax (my, enemy, depth, a, b)
 {
-	if (data [x][y] != 0 && data [x][y] < move) return;
+	// console.log ("negamax [" + depth + "]: " + my.x + ", " + my.y + " vs " + enemy.x + ", " + enemy.y);
+	if (depth == 0)
+	{
+		nextMove = my;
+		return evaluate_pos (my, enemy);
+	}
 	
-	data [x][y] = move;
+	var moves = allValidMoves [my.x][my.y];
+	var bestMove = my;
 	
-	if (x > 0) func1 (data, x - 1, y, move + 1);
-	if (y > 0) func1 (data, x, y - 1, move + 1);
-	if (x < MAP_SIZE - 1) func1 (data, x + 1, y, move + 1);
-	if (y < MAP_SIZE - 1) func1 (data, x, y + 1, move + 1);
+	for (var moveId = 0; moveId < moves.length; moveId ++)
+	{
+		var move = moves [moveId];
+		if (board [move.x][move.y] != BLOCK_EMPTY) continue;
+		
+		board [move.x][move.y] = BLOCK_OBSTACLE;
+		var score = -negamax (enemy, move, depth - 1, -b, -a);
+		board [move.x][move.y] = BLOCK_EMPTY;
+		
+		if (score > a)
+		{
+			a = score;
+			bestMove = move;
+			if (a >= b) break;
+		}
+		else if (bestMove == my) bestMove = move;
+	}
+	
+	nextMove = bestMove;
+	return a;
 }
 
-var max = -1;
-var maxX = -1;
-var maxY = -1;
-
-function func2 (data, x, y, move)
+function createVaildMoves ()
 {
-	if (move == 1) { maxX = x; maxY = y; return; }
-	
-	var suitableDir = new Array();	
-	if (x > 0 && data [x - 1][y] == move) 				suitableDir.push (new Position (x - 1, y));
-	if (y > 0 && data [x][y - 1] == move) 				suitableDir.push (new Position (x, y - 1));
-	if (x < MAP_SIZE - 1 && data [x + 1][y] == move)	suitableDir.push (new Position (x + 1, y));
-	if (y < MAP_SIZE - 1 && data [x][y + 1] == move)	suitableDir.push (new Position (x, y + 1));
-	
-	var selection = (Math.random() * suitableDir.length) >> 0;
-	var nextMove = suitableDir[selection];
-	
-	// console.log ("suitableDir: " + suitableDir + " >> " + dir);
-	func2 (data, nextMove.x, nextMove.y, move - 1);
-}
-
-function AI_1 (zone, mX, mY)
-{
-	func1 (zone, mX, mY, 1);
-
-	max = -1;
-	maxX = -1;
-	maxY = -1;
-	for (var x = 0; x < MAP_SIZE; x++) for (var y = 0; y < MAP_SIZE; y++)
-		if (zone [x][y] > max) { max = zone [x][y]; maxX = x; maxY = y; }
-	
-	// console.log ("AI_1: " + maxX + ", " + maxY + " >> " + max);
-	func2 (zone, maxX, maxY, max - 1);
-
-	var dir = -1;
-	if (mX - 1 == maxX)				dir = DIRECTION_LEFT;
-	else if (mX + 1 == maxX)		dir = DIRECTION_RIGHT;
-	else if (mY - 1 == maxY)		dir = DIRECTION_UP;
-	else if (mY + 1 == maxY)		dir = DIRECTION_DOWN;
-
-	return dir;
+	allValidMoves = [];
+	for (var x = 0; x < MAP_SIZE; x++)
+	{
+		allValidMoves [x] = [];
+		for (var y = 0; y < MAP_SIZE; y++)
+		{
+			allValidMoves [x][y] = [];
+			if (board [x][y] == BLOCK_OBSTACLE) continue;
+			if (x > 0 && board [x - 1][y] == BLOCK_EMPTY) 				allValidMoves [x][y].push (new Position (x - 1, y));
+			if (y > 0 && board [x][y - 1] == BLOCK_EMPTY) 				allValidMoves [x][y].push (new Position (x, y - 1));
+			if (x < MAP_SIZE - 1 && board [x + 1][y] == BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x + 1, y));
+			if (y < MAP_SIZE - 1 && board [x][y + 1] == BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x, y + 1));
+		}
+	}
 }

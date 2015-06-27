@@ -347,7 +347,7 @@ function calcBestZone(graphArray, index_pos)
 				zone = calcZone(cloneArrayGraph, cloneArrayHistory, idx);
 				if(bestZone < zone)
 					bestZone = zone;
-				console.log("Zone " + idx + " for idx:" + index_pos + " => " + zone);
+				// console.log("Zone " + idx + " for idx:" + index_pos + " => " + zone);
 			}
 		}
 	}	
@@ -437,7 +437,7 @@ function MyTurn() {
 		}
 	}
 	// Call "Command". Don't ever forget this. And make it quick, you only have 3 sec to call this.		
-	console.log("suitableDir:" + suitableDir);
+	// console.log("suitableDir:" + suitableDir);
 	numMove++;
 	Command(lastMove);
 }

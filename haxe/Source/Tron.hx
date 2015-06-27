@@ -5,6 +5,7 @@ class Tron extends Player
 	override public function myTurn ():Int
 	{
 		if (allValidMoves == null) createVaildMoves ();
+		else updateVaildMoves ();
 		
 		nextMove = null;
 		var score = negamax (myPosition, enemyPosition, 10, -1e6, 1e6);
@@ -131,6 +132,30 @@ class Tron extends Player
 			}
 		}
 	}
+	
+	private function updateVaildMoves ():Void
+	{
+		var checkList:Array<Position> = [
+			new Position (myPosition.x - 1, myPosition.y), new Position (myPosition.x + 1, myPosition.y),
+			new Position (myPosition.x, myPosition.y - 1), new Position (myPosition.x, myPosition.y + 1), 
+			new Position (enemyPosition.x - 1, enemyPosition.y), new Position (enemyPosition.x + 1, enemyPosition.y),
+			new Position (enemyPosition.x, enemyPosition.y - 1), new Position (enemyPosition.x, enemyPosition.y + 1), 
+		];
+		
+		for (block in checkList)
+		{
+			var x:Int = block.x;
+			if (x < 0 || x > Value.MAP_SIZE - 1) continue;
+			
+			var y:Int = block.y;
+			if (y < 0 || y > Value.MAP_SIZE - 1) continue;
+			
+			for (move in allValidMoves [x][y])
+				if (board [move.x][move.y] != Value.BLOCK_EMPTY)
+					allValidMoves [x][y].remove (move);
+		}
+	}
+	
 	override public function debug (canvas:Board):Void
 	{
 		trace ("debug: " + id);

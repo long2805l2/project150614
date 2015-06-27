@@ -193,22 +193,23 @@ function init()
 			}
 		}
 
-		var score = negamax(p2x+w*p2y,p1x+w*p1y,6,-1e6,1e6); // side effect of negamax() is to set p2move
+		var score = negamax(p2x+w*p2y,p1x+w*p1y,4,-1e6,1e6); // side effect of negamax() is to set p2move
 
 		p1x += dx[p1move]; p1y += dy[p1move];
-		p2x += dx[p2move]; p2y += dy[p2move];
+		// p2x += dx[p2move]; p2y += dy[p2move];
 		var p1idx = p1x+p1y*w;
 		var p2idx = p2x+p2y*w;
-		if((map[p1idx] && map[p2idx]) || p1idx == p2idx)
-			draw();
+		// if((map[p1idx] && map[p2idx]) || p1idx == p2idx)
+			// draw();
 		if(map[p1idx]) {
 			crash(p1x,p1y,1);
 			drawPlayer(p2x,p2y,2);
 		}
-		else if(map[p2idx]) {
-			drawPlayer(p1x,p1y,1);
-			crash(p2x,p2y,2);
-		}
+		// else 
+		// if(map[p2idx]) {
+			// drawPlayer(p1x,p1y,1);
+			// crash(p2x,p2y,2);
+		// }
 		else {
 			drawPlayer(p1x,p1y,1);
 			drawPlayer(p2x,p2y,2);

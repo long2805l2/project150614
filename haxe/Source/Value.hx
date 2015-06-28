@@ -26,9 +26,9 @@ class Value
 	public static var DIRECTION_RIGHT:Int = 3;
 	public static var DIRECTION_DOWN:Int = 4;
 	
-	public static var MAP_SIZE:Int = 11;
-	public static var OBSTACLES:Int = 5;
-	public static var TURN_TIME:Int = 10;
+	public static var MAP_SIZE:Int = 6;
+	public static var OBSTACLES:Int = 0;
+	public static var TURN_TIME:Int = 1;
 	
 	public static var BLOCK_SIZE:Int = 50;
 	public static var BLOCK_COLORS:Array<Int> = [0xFFFFFF, 0x00FF00, 0x007700, 0xFF0000, 0x770000, 0x777777];

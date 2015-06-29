@@ -139,30 +139,30 @@ class Game
 					var dir:Int = player1.myTurn ();
 					if (canvas != null) player1.debug (canvas);
 					
-					// if (validMove (player1.position, dir))
-					// {
+					if (validMove (player1.position, dir))
+					{
 						turn = Value.TURN_PLAYER_2;
-						// board [player1.x][player1.y] = Value.BLOCK_PLAYER_1_TRAIL;
-						// player1.move (dir);
-						// board [player1.x][player1.y] = Value.BLOCK_PLAYER_1;
-					// }
-					// else
-						// state = Value.GAMESTATE_END;
+						board [player1.x][player1.y] = Value.BLOCK_PLAYER_1_TRAIL;
+						player1.move (dir);
+						board [player1.x][player1.y] = Value.BLOCK_PLAYER_1;
+					}
+					else
+						state = Value.GAMESTATE_END;
 				
 				case Value.TURN_PLAYER_2:
-					// player2.update (player1.position, getBoard ());
-					// if (canvas != null) player2.debug (canvas);
+					player2.update (player1.position, getBoard ());
+					if (canvas != null) player2.debug (canvas);
 					
-					// var dir:Int = player2.myTurn ();
-					// if (validMove (player2.position, dir))
-					// {
+					var dir:Int = player2.myTurn ();
+					if (validMove (player2.position, dir))
+					{
 						turn = Value.TURN_PLAYER_1;
-						// board [player2.x][player2.y] = Value.BLOCK_PLAYER_2_TRAIL;
-						// player2.move (dir);
-						// board [player2.x][player2.y] = Value.BLOCK_PLAYER_2;
-					// }
-					// else
-						// state = Value.GAMESTATE_END;
+						board [player2.x][player2.y] = Value.BLOCK_PLAYER_2_TRAIL;
+						player2.move (dir);
+						board [player2.x][player2.y] = Value.BLOCK_PLAYER_2;
+					}
+					else
+						state = Value.GAMESTATE_END;
 			}
 			case Value.GAMESTATE_END:
 		}

@@ -8,7 +8,7 @@ class Tron extends Player
 		else updateVaildMoves ();
 		
 		nextMove = null;
-		var score = negamax (myPosition, enemyPosition, 10, -1e6, 1e6);
+		var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
 		// if (nextMove == null)
 		
 		var dir:Int = -1;
@@ -89,10 +89,11 @@ class Tron extends Player
 		
 		var moves:Array<Position> = allValidMoves [my.x][my.y];
 		var bestMove:Position = my;
-		
+		var isTerminal:Bool = true;
 		for (move in moves)
 		{
 			if (board [move.x][move.y] != Value.BLOCK_EMPTY) continue;
+			isTerminal = false;
 			
 			board [move.x][move.y] = Value.BLOCK_OBSTACLE;
 			var score = -negamax (enemy, move, depth - 1, -b, -a);
@@ -109,8 +110,8 @@ class Tron extends Player
 		}
 		
 		nextMove = bestMove;
-		// trace ("bestMove: " + bestMove);
-		// if (bestMove == my) return b;
+		
+		if (isTerminal) return evaluate_pos (my, enemy);
 		return a;
 	}
 	

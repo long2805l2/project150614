@@ -2,14 +2,50 @@ package;
 
 class Tron extends Player
 {
+	private var evaluateData:Array<Array<Int>>;
+	private var evaluateMark:Int;
+	private var nextMove:Position;
+	
+	private var state:Int = DIVIDE;
+	private static var DIVIDE = 0;
+	private static var CONQUER = 1;
+	
+	private var turn:Int = 0;
+	private var validBlock:Int = 0;
+	
 	override public function myTurn ():Int
 	{
-		if (allValidMoves == null) createVaildMoves ();
-		else updateVaildMoves ();
+		if (allValidMoves == null)
+		{
+			evaluateData = [];
+			for (x in 0 ... board.length)
+			{
+				evaluateData [x] = [];
+				for (y in 0 ... board [x].length)
+					evaluateData [x][y] = 0;
+			}
+			evaluateMark = 0;
+			turn = 0;
+		
+			createVaildMoves ();
+		}
+		
+		evaluate_map ();
 		
 		nextMove = null;
-		var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
-		// if (nextMove == null)
+		switch (state)
+		{
+			case Tron.DIVIDE:
+			trace ("DIVIDE: " + turn + "/" + validBlock);
+			updateVaildMoves ();
+			var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
+			
+			case Tron.CONQUER:
+			trace ("CONQUER: " + turn + "/" + validBlock);
+			updateVaildMoves ();
+			var score = negamax (myPosition, enemyPosition, 20, -1e6, 1e6);
+		}
+		
 		
 		var dir:Int = -1;
 		if (this.x - 1 == nextMove.x)			dir = Value.DIRECTION_LEFT;
@@ -20,15 +56,54 @@ class Tron extends Player
 		return dir;
 	}
 	
+	private function evaluate_map ():Void
+	{
+		turn ++;
+		evaluateMark ++;
+		var enemy:Int = board [enemyPosition.x][enemyPosition.y];
+		board [enemyPosition.x][enemyPosition.y] = Value.BLOCK_EMPTY;
+		
+		var current:Position = null;
+		var myZone:Array<Position> = [myPosition];
+		var length:Int = -1;
+		var temp:Array<Position> = [];
+		
+		validBlock = 0;
+		while (myZone.length != 0)
+		{
+			length = myZone.length;
+			for (id in 0 ... length)
+			{
+				current = myZone.pop ();
+				if (board [current.x][current.y] == Value.BLOCK_OBSTACLE) continue;
+				
+				if (current.x > 0 && board [current.x - 1][current.y] == Value.BLOCK_EMPTY) 					temp.push (new Position (current.x - 1, current.y));
+				if (current.y > 0 && board [current.x][current.y - 1] == Value.BLOCK_EMPTY) 					temp.push (new Position (current.x, current.y - 1));
+				if (current.x < Value.MAP_SIZE - 1 && board [current.x + 1][current.y] == Value.BLOCK_EMPTY)	temp.push (new Position (current.x + 1, current.y));
+				if (current.y < Value.MAP_SIZE - 1 && board [current.x][current.y + 1] == Value.BLOCK_EMPTY)	temp.push (new Position (current.x, current.y + 1));
+				
+				while (temp.length > 0)
+				{
+					current = temp.pop ();
+					if (evaluateData [current.x][current.y] != evaluateMark)
+					{
+						evaluateData [current.x][current.y] = evaluateMark;
+						myZone.push (current);
+						validBlock ++;
+					}
+				}
+			}
+		}
+		
+		if (evaluateData [enemyPosition.x][enemyPosition.y] != evaluateMark)
+			state = CONQUER;
+		
+		board [enemyPosition.x][enemyPosition.y] = enemy;
+	}
+	
 	private function evaluate_pos (my:Position, enemy:Position):Int
 	{
-		var data:Array<Array<Int>> = [];
-		for (x in 0 ... board.length)
-		{
-			data [x] = [];
-			for (y in 0 ... board [x].length)
-				data [x][y] = (board [x][y] == Value.BLOCK_EMPTY) ? 0 : -1;
-		}
+		evaluateMark ++;
 		
 		var myValue:Int = 1;
 		var myZone:Array<Position> = [my];
@@ -46,9 +121,10 @@ class Tron extends Player
 				current = myZone.pop ();
 				for (move in allValidMoves [current.x][current.y])
 				{
-					if (data [move.x][move.y] == 0)
+					if (board [move.x][move.y] == Value.BLOCK_EMPTY)
+					if (evaluateData [move.x][move.y] != evaluateMark)
 					{
-						data [move.x][move.y] = -1;
+						evaluateData [move.x][move.y] = evaluateMark;
 						temp.push (move);
 						myValue ++;
 					}
@@ -62,9 +138,10 @@ class Tron extends Player
 				current = enemyZone.pop ();
 				for (move in allValidMoves [current.x][current.y])
 				{
-					if (data [move.x][move.y] == 0)
+					if (board [move.x][move.y] == Value.BLOCK_EMPTY)
+					if (evaluateData [move.x][move.y] != evaluateMark)
 					{
-						data [move.x][move.y] = -1;
+						evaluateData [move.x][move.y] = evaluateMark;
 						temp.push (move);
 						enemyValue ++;
 					}
@@ -77,7 +154,6 @@ class Tron extends Player
 		return myValue - enemyValue;
 	}
 	
-	private var nextMove:Position;
 	private function negamax (my:Position, enemy:Position, depth:Int, a:Float, b:Float):Float
 	{
 		// trace ("negamax [" + depth + "]: " + my + " vs " + enemy + " / " + a + " / " + b);

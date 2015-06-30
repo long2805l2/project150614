@@ -11,7 +11,10 @@ class Game
 	private var turn:Int;
 	
 	public var player1:Player;
+	public var pathPlayer1:Array<Position>;
+	
 	public var player2:Player;
+	public var pathPlayer2:Array<Position>;
 	
 	public function new (mapSize:Int, obstacles:Int)
 	{
@@ -86,7 +89,11 @@ class Game
 	public function start (p1:Player, p2:Player):Void
 	{
 		player1 = p1;
+		pathPlayer1 = [];
+		
 		player2 = p2;
+		pathPlayer2 = [];
+		
 		reset ();
 	}
 	
@@ -115,13 +122,16 @@ class Game
 		{
 			player1.x = 0;
 			player1.y = 0;
+			pathPlayer1 = [new Position (player1.x, player1.y)];
 		}
 		
 		if (player2 != null)
 		{		
 			player2.x = Value.MAP_SIZE - 1;
 			player2.y = Value.MAP_SIZE - 1;
+			pathPlayer2 = [new Position (player2.x, player2.y)];
 		}
+		
 		state = Value.GAMESTATE_COMMENCING;
 		turn = Value.TURN_PLAYER_1;
 	}
@@ -145,6 +155,7 @@ class Game
 						board [player1.x][player1.y] = Value.BLOCK_PLAYER_1_TRAIL;
 						player1.move (dir);
 						board [player1.x][player1.y] = Value.BLOCK_PLAYER_1;
+						pathPlayer1.push (new Position (player1.x, player1.y));
 					}
 					else
 						state = Value.GAMESTATE_END;
@@ -160,6 +171,7 @@ class Game
 						board [player2.x][player2.y] = Value.BLOCK_PLAYER_2_TRAIL;
 						player2.move (dir);
 						board [player2.x][player2.y] = Value.BLOCK_PLAYER_2;
+						pathPlayer2.push (new Position (player2.x, player2.y));
 					}
 					else
 						state = Value.GAMESTATE_END;

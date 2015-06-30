@@ -61,7 +61,7 @@ class Main extends Sprite
 		switch (controlBtn.name)
 		{
 			case "play":
-			game.start (new Tron (Value.TURN_PLAYER_1), new Tron (Value.TURN_PLAYER_2));
+			game.start (new Tron (Value.TURN_PLAYER_1), new AI2 (Value.TURN_PLAYER_2));
 			controlBtn.name = "pause";
 			controlBtn.text = "<font color=\"#FFFFFF\">Pause</font>";
 			
@@ -82,6 +82,8 @@ class Main extends Sprite
 	{
 		game = new Game (Value.MAP_SIZE, Value.OBSTACLES);
 		board.draw (game.getBoard ());
+		board.path (game.pathPlayer1, Value.BLOCK_PLAYER_1);
+		board.path (game.pathPlayer2, Value.BLOCK_PLAYER_2);
 		
 		controlBtn.name = "play";
 		controlBtn.text = "<font color=\"#FFFFFF\">Play</font>";
@@ -117,6 +119,8 @@ class Main extends Sprite
 			
 			game.update ();
 			board.draw (game.board);
+			board.path (game.pathPlayer1, Value.BLOCK_PLAYER_1);
+			board.path (game.pathPlayer2, Value.BLOCK_PLAYER_2);
 		}
 	}
 }

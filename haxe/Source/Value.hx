@@ -28,13 +28,22 @@ class Value
 	
 	public static var MAP_SIZE:Int = 11;
 	public static var OBSTACLES:Int = 5;
-	public static var TURN_TIME:Int = 1;
+	public static var TURN_TIME:Int = 5;
 	
 	public static var BLOCK_SIZE:Int = 50;
-	public static var BLOCK_COLORS:Array<Int> = [0xFFFFFF, 0x00FF00, 0x007700, 0xFF0000, 0x770000, 0x777777];
+	public static var BLOCK_COLORS:Array<Int> = [0xFFFFFF, 0x229922, 0x007700, 0x992222, 0x770000, 0x777777];
 	
 	public static var board:Array<Array<Int>> = null;
 	
 	public static var myPosition:Position = null;
 	public static var enemyPosition:Position = null;
+	
+	public static var CHAR_START:String = "■";
+	public static var CHAR_CURRENT:String = "●";
+	public static var CHAR_TOP:String = "─";
+	public static var CHAR_LEFT:String = "│";
+	public static var CHAR_LEFT_TOP:String = "┌";
+	public static var CHAR_RIGHT_TOP:String = "┐";
+	public static var CHAR_RIGHT_BOTTOM:String = "┘";
+	public static var CHAR_LEFT_BOTTOM:String = "└";
 }

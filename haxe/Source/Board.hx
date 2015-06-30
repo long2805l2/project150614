@@ -12,6 +12,8 @@ class Board extends Sprite
 	public var blockSize:Float;
 	
 	private var _blocks:Map<String, Block>;
+	private var _canvas1:Sprite;
+	private var _canvas2:Sprite;
 	
 	public function new (width:Int, height:Int, size:Float = 50)
 	{
@@ -44,6 +46,9 @@ class Board extends Sprite
 				this.addChild (block);
 			}
 		}
+		
+		addChild (this._canvas1 = new Sprite ());
+		addChild (this._canvas2 = new Sprite ());
 	}
 	
 	public function draw (data:Array<Array<Int>>):Void
@@ -58,11 +63,50 @@ class Board extends Sprite
 		var block:Block = _blocks.get (x + "_" + y);
 		if (block != null)
 		{
-			// if (color != -1)
-				block.color = color;
-			
-			// if (text != "")
-				block.text = text;
+			block.color = color;
+			block.text = text;
+		}
+	}
+	
+	public function path (data:Array<Position>, color:Int):Void
+	{
+		var canvas:Sprite = color == Value.BLOCK_PLAYER_1 ? _canvas1 : _canvas2;
+		var block:Block = null;
+		var p:Position = null;
+		var c:Int = 0;
+		var t:Float = 2;
+		
+		canvas.graphics.clear ();
+		if (data == null) return;
+		
+		canvas.graphics.beginFill (color, 1);
+		canvas.graphics.lineStyle (t, color, 1);
+		
+		p = data [0];
+		block = _blocks.get (p.x + "_" + p.y);
+		if (block != null)
+		{
+			canvas.graphics.drawRect (block.x - 4, block.y - 4, 8, 8);
+			canvas.graphics.moveTo (block.x, block.y);
+		}
+		
+		for (id in 1 ... data.length)
+		{
+			p = data [id];
+			block = _blocks.get (p.x + "_" + p.y);
+			if (block != null)
+			{
+				canvas.graphics.lineTo (block.x, block.y);
+				if (++c == 10)
+				{
+					c = 0;
+					canvas.graphics.drawRect (block.x - 2, block.y - 2, 4, 4);
+					
+					t += 1;
+					canvas.graphics.lineStyle (t, color, 0.75);
+				}
+				canvas.graphics.moveTo (block.x, block.y);
+			}
 		}
 	}
 }

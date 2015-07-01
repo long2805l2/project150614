@@ -26,8 +26,8 @@ class Value
 	public static var DIRECTION_RIGHT:Int = 3;
 	public static var DIRECTION_DOWN:Int = 4;
 	
-	public static var MAP_SIZE:Int = 11;
-	public static var OBSTACLES:Int = 5;
+	public static var MAP_SIZE:Int = 5;
+	public static var OBSTACLES:Int = 3;
 	public static var TURN_TIME:Int = 5;
 	
 	public static var BLOCK_SIZE:Int = 50;

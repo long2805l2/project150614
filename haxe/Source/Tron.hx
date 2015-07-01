@@ -32,16 +32,15 @@ class Tron extends Player
 		else updateVaildMoves ();
 		
 		nextMove = null;
-		switch (state)
-		{
-			case Tron.DIVIDE:
-			evaluate_map ();
-			var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
+		// switch (state)
+		// {
+			// case Tron.DIVIDE:
+			// evaluate_map ();
+			// var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
 			
-			case Tron.CONQUER:
-			updateVaildMoves ();
-			var score = minimax (myPosition, 12, true);
-		}
+			// case Tron.CONQUER:
+			var score = minimax (myPosition, 3, true);
+		// }
 		
 		var dir:Int = -1;
 		if (this.x - 1 == nextMove.x)			dir = Value.DIRECTION_LEFT;
@@ -193,8 +192,8 @@ class Tron extends Player
 		
 		if (total == 0) return 0;
 		
-		return 1 - maxSize / total;
-		// return maxSize;
+		// return maxSize / total;
+		return maxSize;
 	}
 	
 	private function evaluate_my (my:Position):Float
@@ -259,9 +258,9 @@ class Tron extends Player
 	
 	private function minimax (my:Position, depth:Int, a:Bool):Float
 	{
-		if (depth == 0) return evaluate_my (my);
+		if (depth == 0) return evaluate_waste (my);
 		
-		var bestValue:Float = a ? 10000000 : -10000000;
+		var bestValue:Float = a ? -10000000 : 10000000;
 		var bestMove:Position = my;
 		var isTerminal:Bool = true;
 		
@@ -274,7 +273,7 @@ class Tron extends Player
 			var val:Float = 1 + minimax (move, depth - 1, a);
 			board [move.x][move.y] = Value.BLOCK_EMPTY;
 			
-			if (a && bestValue > val)
+			if (a && bestValue < val)
 			{
 				bestValue = val;
 				bestMove = move;

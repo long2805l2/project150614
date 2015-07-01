@@ -29,23 +29,19 @@ class Tron extends Player
 		
 			createVaildMoves ();
 		}
-		
-		evaluate_map ();
+		else updateVaildMoves ();
 		
 		nextMove = null;
 		switch (state)
 		{
 			case Tron.DIVIDE:
-			trace ("DIVIDE: " + turn + "/" + validBlock);
-			updateVaildMoves ();
+			evaluate_map ();
 			var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
 			
 			case Tron.CONQUER:
-			trace ("CONQUER: " + turn + "/" + validBlock);
 			updateVaildMoves ();
-			var score = negamax (myPosition, enemyPosition, 20, -1e6, 1e6);
+			var score = minimax (myPosition, 12, true);
 		}
-		
 		
 		var dir:Int = -1;
 		if (this.x - 1 == nextMove.x)			dir = Value.DIRECTION_LEFT;
@@ -154,14 +150,85 @@ class Tron extends Player
 		return myValue - enemyValue;
 	}
 	
+	private function evaluate_waste (my:Position):Float
+	{
+		var allMark:Array<Int> = [];
+		var total:Float = 0;
+		var maxSize:Float = 0;
+		for (move in allValidMoves [my.x][my.y])
+		{
+			if (board [move.x][move.y] != Value.BLOCK_EMPTY) continue;
+			
+			evaluateMark ++;
+			if (allMark.indexOf (evaluateData [move.x][move.y]) != -1) continue;
+			allMark.push (evaluateMark);
+			
+			var size:Int = 1;
+			var length:Int = -1;
+			var current:Position = null;
+			var myZone:Array<Position> = [move];
+			
+			while (myZone.length != 0)
+			{
+				length = myZone.length;
+				for (i in 0 ... length)
+				{
+					current = myZone.pop ();
+					for (move in allValidMoves [current.x][current.y])
+					{
+						if (board [move.x][move.y] == Value.BLOCK_EMPTY)
+						if (evaluateData [move.x][move.y] != evaluateMark)
+						{
+							evaluateData [move.x][move.y] = evaluateMark;
+							myZone.push (move);
+							size ++;
+						}
+					}
+				}
+			}
+			
+			maxSize = Math.max (maxSize, size);
+			total += size;
+		}
+		
+		if (total == 0) return 0;
+		
+		return 1 - maxSize / total;
+		// return maxSize;
+	}
+	
+	private function evaluate_my (my:Position):Float
+	{
+		var size:Int = 1;
+		var length:Int = -1;
+		var current:Position = null;
+		var myZone:Array<Position> = [my];
+		
+		while (myZone.length != 0)
+		{
+			length = myZone.length;
+			for (i in 0 ... length)
+			{
+				current = myZone.pop ();
+				for (move in allValidMoves [current.x][current.y])
+				{
+					if (board [move.x][move.y] == Value.BLOCK_EMPTY)
+					if (evaluateData [move.x][move.y] != evaluateMark)
+					{
+						evaluateData [move.x][move.y] = evaluateMark;
+						myZone.push (move);
+						size ++;
+					}
+				}
+			}
+		}
+		
+		return size;
+	}
+	
 	private function negamax (my:Position, enemy:Position, depth:Int, a:Float, b:Float):Float
 	{
-		// trace ("negamax [" + depth + "]: " + my + " vs " + enemy + " / " + a + " / " + b);
-		if (depth == 0)
-		{
-			nextMove = my;
-			return evaluate_pos (my, enemy);
-		}
+		if (depth == 0) return evaluate_pos (my, enemy);
 		
 		var moves:Array<Position> = allValidMoves [my.x][my.y];
 		var bestMove:Position = my;
@@ -175,7 +242,6 @@ class Tron extends Player
 			var score = -negamax (enemy, move, depth - 1, -b, -a);
 			board [move.x][move.y] = Value.BLOCK_EMPTY;
 			
-			// trace ("move: " + move + " >> " + score);
 			if (score > a)
 			{
 				a = score;
@@ -189,6 +255,41 @@ class Tron extends Player
 		
 		if (isTerminal) return evaluate_pos (my, enemy);
 		return a;
+	}
+	
+	private function minimax (my:Position, depth:Int, a:Bool):Float
+	{
+		if (depth == 0) return evaluate_my (my);
+		
+		var bestValue:Float = a ? 10000000 : -10000000;
+		var bestMove:Position = my;
+		var isTerminal:Bool = true;
+		
+		for (move in allValidMoves [my.x][my.y])
+		{
+			if (board [move.x][move.y] != Value.BLOCK_EMPTY) continue;
+			isTerminal = false;
+			
+			board [move.x][move.y] = Value.BLOCK_OBSTACLE;
+			var val:Float = 1 + minimax (move, depth - 1, a);
+			board [move.x][move.y] = Value.BLOCK_EMPTY;
+			
+			if (a && bestValue > val)
+			{
+				bestValue = val;
+				bestMove = move;
+			}
+			else if (!a && bestValue > val)
+			{
+				bestValue = val;
+				bestMove = move;
+			}
+		}
+		
+		nextMove = bestMove;
+		
+		if (isTerminal) return evaluate_waste (my);
+		return bestValue;
 	}
 	
 	private var allValidMoves:Array<Array<Array<Position>>>;

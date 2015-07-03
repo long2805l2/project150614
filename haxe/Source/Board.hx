@@ -12,8 +12,8 @@ class Board extends Sprite
 	public var blockSize:Float;
 	
 	private var _blocks:Map<String, Block>;
-	private var _canvas1:Sprite;
-	private var _canvas2:Sprite;
+	public var canvas1:Sprite;
+	public var canvas2:Sprite;
 	
 	public function new (width:Int, height:Int, size:Float = 50)
 	{
@@ -47,8 +47,8 @@ class Board extends Sprite
 			}
 		}
 		
-		addChild (this._canvas1 = new Sprite ());
-		addChild (this._canvas2 = new Sprite ());
+		addChild (this.canvas1 = new Sprite ());
+		addChild (this.canvas2 = new Sprite ());
 	}
 	
 	public function draw (data:Array<Array<Int>>):Void
@@ -58,9 +58,14 @@ class Board extends Sprite
 				block (x, y, data [x][y]);
 	}
 	
+	public function getBlock (x:Int, y:Int):Block
+	{
+		return _blocks.get (x + "_" + y);
+	}
+	
 	public function block (x:Int, y:Int, color:Int = 0, text:String = ""):Void
 	{
-		var block:Block = _blocks.get (x + "_" + y);
+		var block:Block = getBlock (x, y);
 		if (block != null)
 		{
 			block.color = color;
@@ -70,7 +75,7 @@ class Board extends Sprite
 	
 	public function path (data:Array<Position>, color:Int):Void
 	{
-		var canvas:Sprite = color == Value.BLOCK_PLAYER_1 ? _canvas1 : _canvas2;
+		var canvas:Sprite = color == Value.BLOCK_PLAYER_1 ? canvas1 : canvas2;
 		var block:Block = null;
 		var p:Position = null;
 		var c:Int = 0;

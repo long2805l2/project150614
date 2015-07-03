@@ -45,10 +45,10 @@ class Game
 			// y = 1;
 			
 			map [x][y] = Value.BLOCK_OBSTACLE;
-			map [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
+			// map [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
 			
 			board [x][y] = Value.BLOCK_OBSTACLE;
-			board [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
+			// board [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
 		}
 		
 		map [0][0] = Value.BLOCK_PLAYER_1;

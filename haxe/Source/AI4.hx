@@ -5,23 +5,20 @@ import flash.display.Sprite;
 
 class AI4 extends Player
 {
-	private var allValidMoves:Array<Array<Array<Position>>>;
-	private var nLength:Array<Array<Int>>;
-	private var nodes:Array<Array<Position>>;
-	private var commands:Array<String>;
-	private var backup:Array<Position>;
-	private var path:Array<Position>;
-	private var leaf:Array<Position>;
+	private var nodes:Array<Array<Node>>;
+	private var path:Node;
+	
+	private var allValidMoves:Array<Array<Array<Node>>>;
 	
 	override public function myTurn ():Int
 	{
 		if (allValidMoves == null)
 		{
-			commands = [];
-			backup = [];
-			path = [];
+			// commands = [];
+			// backup = [];
+			// path = [];
 			
-			createVaildMoves ();
+			
 			calculator ();
 		}
 		
@@ -35,86 +32,63 @@ class AI4 extends Player
 		{
 			nodes [x] = [];
 			for (y in 0 ... board [x].length)
-				nodes [x][y] = null;
+				nodes [x][y] = new Node (x, y);
 		}
 		
-		nLength = [];
-		for (x in 0 ... board.length)
-		{
-			nLength [x] = [];
-			for (y in 0 ... board [x].length)
-				nLength [x][y] = 0;
-		}
+		createVaildMoves ();
 		
-		leaf = [];
-		nLength [myPosition.x][myPosition.y] = dfs (nodes, myPosition);
-		
+		path = nodes [myPosition.x][myPosition.y];
+		var val:Int = dfs (path);
 	}
 	
-	private function dfs (data:Array<Array<Position>>, current:Position, clear:Bool = true):Int
+	private function expandPath (path:Node):Void
+	{
+	}
+	
+	private function dfsPath (path:Array<Position>, current:Position):Void
+	{
+	}
+	
+	private function dfs (current:Node):Int
 	{
 		var sum:Int = 1;
 		var max:Int = 0;
-		var maxChild:Position = null;
+		var maxChild:Node = null;
 		
 		for (near in allValidMoves [current.x][current.y])
 		{
 			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
-			if (data [near.x][near.y] != null) continue;
+			if (nodes [near.x][near.y].parent != null) continue;
 			
-			data [near.x][near.y] = current;
-			var val:Int = dfs (data, near);
+			nodes [near.x][near.y].parent = current;
+			var val:Int = dfs (near);
 			if (max < val)
 			{
 				max = val;
-				if (clear && maxChild != null) clear_dfs (data, maxChild);
+				if (maxChild != null) clear_dfs (maxChild);
 				maxChild = near;
 			}
-			else if (clear)
+			else
 			{
-				clear_dfs (data, near);
+				clear_dfs (near);
 			}
 		}
 		
+		current.child = maxChild;
 		sum = max + 1;
-		nLength [current.x][current.y] = sum;
+		
 		return sum;
 	}
 	
-	private function clear_dfs (data:Array<Array<Position>>, current:Position):Void
+	private function clear_dfs (current:Node):Void
 	{
 		for (near in allValidMoves [current.x][current.y])
 		{
 			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
-			if (data [near.x][near.y] == current)
-				clear_dfs (data, near);
+			if (nodes [near.x][near.y].parent == current)
+				clear_dfs (near);
 		}
-		data [current.x][current.y] = null;
-		nLength [current.x][current.y] = 0;
-	}
-	
-	private function bfs (data:Array<Array<Position>>, current:Position):Void
-	{
-		var queue:Array<Position> = [current];
-		var length:Int = -1;
-		
-		while (queue.length != 0)
-		{
-			length = queue.length;
-			for (id in 0 ... length)
-			{
-				current = queue.pop ();
-				for (near in allValidMoves [current.x][current.y])
-				{
-					if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
-					if (data [near.x][near.y] == null)
-					{
-						data [near.x][near.y] = current;
-						queue.push (near);
-					}
-				}
-			}
-		}
+		nodes [current.x][current.y].parent = null;
 	}
 	
 	private function createVaildMoves ():Void
@@ -127,39 +101,43 @@ class AI4 extends Player
 			{
 				allValidMoves [x][y] = [];
 				if (board [x][y] == Value.BLOCK_OBSTACLE) continue;
-				if (x > 0 && board [x - 1][y] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (new Position (x - 1, y));
-				if (y > 0 && board [x][y - 1] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (new Position (x, y - 1));
-				if (x < Value.MAP_SIZE - 1 && board [x + 1][y] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x + 1, y));
-				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x, y + 1));
+				if (x > 0 && board [x - 1][y] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (nodes [x - 1][y]);
+				if (y > 0 && board [x][y - 1] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (nodes [x][y - 1]);
+				if (x < Value.MAP_SIZE - 1 && board [x + 1][y] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (nodes [x + 1][y]);
+				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (nodes [x][y + 1]);
 			}
 		}
 	}
 	
 	override public function debug (canvas:Board):Void
 	{
+		// canvas.path (path, Value.BLOCK_PLAYER_1);
+		
 		var cv:Sprite = canvas.canvas2;
 		cv.graphics.clear ();
 		cv.graphics.lineStyle (2, 0x000000, 1);
 		
-		for (x in 0 ... board.length)
+		var current:Node = path;
+		while (current != null)
 		{
-			for (y in 0 ... board [x].length)
-			{
-				var blockNode:Block = canvas.getBlock (x, y);
-				if (blockNode == null) continue;
-				
-				if (nLength [x][y] > 0)
-				blockNode.text = "" + nLength [x][y];
-				
-				var parent:Position = nodes [x][y];
-				if (parent == null) continue;
-				
-				var blockParent:Block = canvas.getBlock (parent.x, parent.y);
-				if (blockParent == null) continue;
-				
-				cv.graphics.moveTo (blockParent.x, blockParent.y);
-				cv.graphics.lineTo (blockNode.x, blockNode.y);
-			}
+			if (current.child == null) break;
+			
+			var blockCurrent:Block = canvas.getBlock (current.x, current.y);
+			var blockChild:Block = canvas.getBlock (current.child.x, current.child.y);
+			
+			current = current.child;
+			
+			if (blockCurrent == null) continue;
+			if (blockChild == null) continue;
+			
+			cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
+			cv.graphics.lineTo (blockChild.x, blockChild.y);
 		}
 	}
+}
+
+class Node extends Position
+{
+	public var parent:Node = null;
+	public var child:Node = null;
 }

@@ -6,6 +6,7 @@ import flash.display.Sprite;
 class AI4 extends Player
 {
 	private var allValidMoves:Array<Array<Array<Position>>>;
+	private var nLength:Array<Array<Int>>;
 	private var nodes:Array<Array<Position>>;
 	private var commands:Array<String>;
 	private var backup:Array<Position>;
@@ -36,20 +37,56 @@ class AI4 extends Player
 				nodes [x][y] = null;
 		}
 		
-		bfs (nodes, myPosition);
+		nLength = [];
+		for (x in 0 ... board.length)
+		{
+			nLength [x] = [];
+			for (y in 0 ... board [x].length)
+				nLength [x][y] = 0;
+		}
+		
+		nLength [myPosition.x][myPosition.y] = dfs (nodes, myPosition);
 	}
 	
-	private function dfs (data:Array<Array<Position>>, current:Position):Void
+	private function dfs (data:Array<Array<Position>>, current:Position):Int
 	{
+		var sum:Int = 1;
+		var max:Int = 0;
+		var maxChild:Position = null;
 		for (near in allValidMoves [current.x][current.y])
 		{
 			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
 			if (data [near.x][near.y] == null)
 			{
 				data [near.x][near.y] = current;
-				dfs (data, near);
+				var val:Int = dfs (data, near);
+				if (max < val)
+				{
+					max = val;
+					if (maxChild != null) clear_dfs (data, maxChild);
+					maxChild = near;
+				}
+				else
+				{
+					clear_dfs (data, near);
+				}
 			}
 		}
+		sum = max + 1;
+		nLength [current.x][current.y] = sum;
+		return sum;
+	}
+	
+	private function clear_dfs (data:Array<Array<Position>>, current:Position):Void
+	{
+		for (near in allValidMoves [current.x][current.y])
+		{
+			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
+			if (data [near.x][near.y] == current)
+				clear_dfs (data, near);
+		}
+		data [current.x][current.y] = null;
+		nLength [current.x][current.y] = 0;
 	}
 	
 	private function bfs (data:Array<Array<Position>>, current:Position):Void
@@ -57,11 +94,9 @@ class AI4 extends Player
 		var queue:Array<Position> = [current];
 		var length:Int = -1;
 		
-		trace ("bfs");
 		while (queue.length != 0)
 		{
 			length = queue.length;
-			trace ("length: " + length);
 			for (id in 0 ... length)
 			{
 				current = queue.pop ();
@@ -106,13 +141,18 @@ class AI4 extends Player
 		{
 			for (y in 0 ... board [x].length)
 			{
+				var blockNode:Block = canvas.getBlock (x, y);
+				if (blockNode == null) continue;
+				
+				if (nLength [x][y] > 0)
+				blockNode.text = "" + nLength [x][y];
+				
 				var parent:Position = nodes [x][y];
 				if (parent == null) continue;
 				
 				var blockParent:Block = canvas.getBlock (parent.x, parent.y);
-				var blockNode:Block = canvas.getBlock (x, y);
+				if (blockParent == null) continue;
 				
-				if (blockParent == null || blockNode == null) continue;
 				cv.graphics.moveTo (blockParent.x, blockParent.y);
 				cv.graphics.lineTo (blockNode.x, blockNode.y);
 			}

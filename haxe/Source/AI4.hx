@@ -11,6 +11,7 @@ class AI4 extends Player
 	private var commands:Array<String>;
 	private var backup:Array<Position>;
 	private var path:Array<Position>;
+	private var leaf:Array<Position>;
 	
 	override public function myTurn ():Int
 	{
@@ -45,33 +46,36 @@ class AI4 extends Player
 				nLength [x][y] = 0;
 		}
 		
+		leaf = [];
 		nLength [myPosition.x][myPosition.y] = dfs (nodes, myPosition);
+		
 	}
 	
-	private function dfs (data:Array<Array<Position>>, current:Position):Int
+	private function dfs (data:Array<Array<Position>>, current:Position, clear:Bool = true):Int
 	{
 		var sum:Int = 1;
 		var max:Int = 0;
 		var maxChild:Position = null;
+		
 		for (near in allValidMoves [current.x][current.y])
 		{
 			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
-			if (data [near.x][near.y] == null)
+			if (data [near.x][near.y] != null) continue;
+			
+			data [near.x][near.y] = current;
+			var val:Int = dfs (data, near);
+			if (max < val)
 			{
-				data [near.x][near.y] = current;
-				var val:Int = dfs (data, near);
-				if (max < val)
-				{
-					max = val;
-					if (maxChild != null) clear_dfs (data, maxChild);
-					maxChild = near;
-				}
-				else
-				{
-					clear_dfs (data, near);
-				}
+				max = val;
+				if (clear && maxChild != null) clear_dfs (data, maxChild);
+				maxChild = near;
+			}
+			else if (clear)
+			{
+				clear_dfs (data, near);
 			}
 		}
+		
 		sum = max + 1;
 		nLength [current.x][current.y] = sum;
 		return sum;
@@ -133,7 +137,7 @@ class AI4 extends Player
 	
 	override public function debug (canvas:Board):Void
 	{
-		var cv:Sprite = canvas.canvas1;
+		var cv:Sprite = canvas.canvas2;
 		cv.graphics.clear ();
 		cv.graphics.lineStyle (2, 0x000000, 1);
 		

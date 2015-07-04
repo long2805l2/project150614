@@ -79,7 +79,7 @@ class Board extends Sprite
 		var block:Block = null;
 		var p:Position = null;
 		var c:Int = 0;
-		var t:Float = 2;
+		var t:Float = 4;
 		
 		canvas.graphics.clear ();
 		if (data == null) return;
@@ -98,6 +98,8 @@ class Board extends Sprite
 		for (id in 1 ... data.length)
 		{
 			p = data [id];
+			if (p == null) continue;
+			
 			block = _blocks.get (p.x + "_" + p.y);
 			if (block != null)
 			{
@@ -107,7 +109,7 @@ class Board extends Sprite
 					c = 0;
 					canvas.graphics.drawRect (block.x - 2, block.y - 2, 4, 4);
 					
-					t += 1;
+					// t += 1;
 					canvas.graphics.lineStyle (t, color, 0.75);
 				}
 				canvas.graphics.moveTo (block.x, block.y);

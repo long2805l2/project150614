@@ -39,14 +39,124 @@ class AI4 extends Player
 		
 		path = nodes [myPosition.x][myPosition.y];
 		var val:Int = dfs (path);
+		
+		expandPath ();
 	}
 	
-	private function expandPath (path:Node):Void
+	private function expandPath ():Void
 	{
+		var current:Node = path;
+		while (current != null)
+		{
+			if (current.child == null) break;
+			var start:Node = null;
+			var end:Node = null;
+			var node:Node = null;
+			var oldLength:Int = 0;
+			var newLength:Int = 0;
+			
+			var newPath:Array<Node> = dfsPath (current);
+			if (newPath.length > 3 && newPath [0].index > -1 && newPath [newPath.length - 1].index > -1)
+			{
+				newLength = newPath.length;
+				if (newPath [0].index > newPath [newPath.length - 1].index)
+				{
+					start = newPath.shift ();
+					end = newPath.pop ();
+					end.parent = start.child;
+					oldLength = count (start, end);
+					
+					while (newPath.length > 0)
+					{
+						node = newPath.shift ();
+						node.parent = start;
+						start.child = node;
+						start = node;
+					}
+					start.child = end;
+					end.parent = start;
+					start = path;
+					start.index += 1 + newLength - oldLength;
+					while (start != null)
+					{
+						if (start.child != null)
+							start.child.index = start.index - 1;
+						start = start.child;
+					}
+				}
+				else if (newPath [0].index < newPath [newPath.length - 1].index)
+				{
+					start = newPath.pop ();
+					end = newPath.shift ();
+					end.parent = start.child;
+					oldLength = count (start, end);
+					while (newPath.length > 0)
+					{
+						node = newPath.pop ();
+						node.parent = start;
+						start.child = node;
+						start = node;
+					}
+					start.child = end;
+					end.parent = start;
+					start = path;
+					start.index += 1 + newLength - oldLength;
+					while (start != null)
+					{
+						if (start.child != null)
+							start.child.index = start.index - 1;
+						start = start.child;
+					}
+				}
+			}
+			current = current.child;
+		}
 	}
 	
-	private function dfsPath (path:Array<Position>, current:Position):Void
+	private function dfsPath (current:Node):Array<Node>
 	{
+		var newLength:Int = 0;
+		var newPath:Array<Node> = [];
+		var checkPath:Array<Node> = null;
+		
+		current.use = true;
+		for (near in allValidMoves [current.x][current.y])
+		{
+			if (nodes [near.x][near.y].use) continue;
+			
+			if (nodes [near.x][near.y].parent != null)
+				checkPath = [near];
+			else
+			{
+				checkPath = dfsPath (near);
+			}
+			
+			if (newPath.length < checkPath.length)
+			{
+				if (checkPath.length < 3)
+					newPath = checkPath;
+				else
+				{
+					var pathLength:Int = count (current, checkPath [checkPath.length - 1]);
+					// trace (current + ", " + checkPath + " >> " + pathLength);
+					if (checkPath.length > pathLength && checkPath.length > newLength)
+					{
+						newLength = pathLength;
+						newPath = checkPath;
+					}
+				}
+			}
+		}
+		current.use = false;
+		
+		newPath.unshift (current);
+		return newPath;
+	}
+	
+	private function count (start:Node, end:Node):Int
+	{
+		if (start.index == -1 || end.index == -1) return -1;
+		return 1 + Std.int (Math.abs (start.index - end.index));
 	}
 	
 	private function dfs (current:Node):Int
@@ -57,7 +167,6 @@ class AI4 extends Player
 		
 		for (near in allValidMoves [current.x][current.y])
 		{
-			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
 			if (nodes [near.x][near.y].parent != null) continue;
 			
 			nodes [near.x][near.y].parent = current;
@@ -75,6 +184,7 @@ class AI4 extends Player
 		}
 		
 		current.child = maxChild;
+		current.index = max + 1;
 		sum = max + 1;
 		
 		return sum;
@@ -86,9 +196,13 @@ class AI4 extends Player
 		{
 			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
 			if (nodes [near.x][near.y].parent == current)
+			{
 				clear_dfs (near);
+			}
 		}
-		nodes [current.x][current.y].parent = null;
+		current.child = null;
+		current.parent = null;
+		current.index = -1;
 	}
 	
 	private function createVaildMoves ():Void
@@ -117,21 +231,25 @@ class AI4 extends Player
 		cv.graphics.clear ();
 		cv.graphics.lineStyle (2, 0x000000, 1);
 		
-		var current:Node = path;
-		while (current != null)
+		var current:Node = null;
+		for (x in 0 ... board.length)
 		{
-			if (current.child == null) break;
-			
-			var blockCurrent:Block = canvas.getBlock (current.x, current.y);
-			var blockChild:Block = canvas.getBlock (current.child.x, current.child.y);
-			
-			current = current.child;
-			
-			if (blockCurrent == null) continue;
-			if (blockChild == null) continue;
-			
-			cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
-			cv.graphics.lineTo (blockChild.x, blockChild.y);
+			for (y in 0 ... board [x].length)
+			{
+				current = nodes [x][y];
+				if (current == null) continue;
+				if (current.child == null) continue;
+				
+				var blockCurrent:Block = canvas.getBlock (current.x, current.y);
+				var blockChild:Block = canvas.getBlock (current.child.x, current.child.y);
+				
+				if (blockCurrent == null) continue;
+				if (blockChild == null) continue;
+				
+				blockCurrent.text = "" + current.index;
+				cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
+				cv.graphics.lineTo (blockChild.x, blockChild.y);
+			}
 		}
 	}
 }
@@ -140,4 +258,6 @@ class Node extends Position
 {
 	public var parent:Node = null;
 	public var child:Node = null;
+	public var index:Int = -1;
+	public var use:Bool = false;
 }

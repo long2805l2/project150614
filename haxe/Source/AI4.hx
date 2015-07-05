@@ -192,9 +192,9 @@ class AI4 extends Player
 		
 		for (near in allValidMoves [current.x][current.y])
 		{
-			if (nodes [near.x][near.y].parent != null) continue;
+			if (near.parent != null) continue;
 			
-			nodes [near.x][near.y].parent = current;
+			near.parent = current;
 			var val:Int = dfs (near);
 			if (max < val)
 			{
@@ -220,10 +220,7 @@ class AI4 extends Player
 		for (near in allValidMoves [current.x][current.y])
 		{
 			if (board [near.x][near.y] != Value.BLOCK_EMPTY) continue;
-			if (nodes [near.x][near.y].parent == current)
-			{
-				clear_dfs (near);
-			}
+			if (near.parent == current) clear_dfs (near);
 		}
 		current.child = null;
 		current.parent = null;

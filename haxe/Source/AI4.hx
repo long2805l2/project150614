@@ -40,6 +40,7 @@ class AI4 extends Player
 		path = nodes [myPosition.x][myPosition.y];
 		var val:Int = dfs (path);
 		
+		updatePath ();
 		expandPath ();
 	}
 	
@@ -49,87 +50,124 @@ class AI4 extends Player
 		while (current != null)
 		{
 			if (current.child == null) break;
-			var start:Node = null;
-			var end:Node = null;
-			var node:Node = null;
 			var oldLength:Int = 0;
 			var newLength:Int = 0;
+			var start:Node = null;
+			var end:Node = null;
 			
-			var newPath:Array<Node> = dfsPath (current);
+			var debug:Bool = current.x == 4 && current.y == 1;
+			var newPath:Array<Node> = dfsPath (current, debug);
+			if (debug) trace ("newPath: " + newPath);
 			if (newPath.length > 3 && newPath [0].index > -1 && newPath [newPath.length - 1].index > -1)
 			{
 				newLength = newPath.length;
-				if (newPath [0].index > newPath [newPath.length - 1].index)
+				if (newPath [0].index < newPath [newPath.length - 1].index)
 				{
 					start = newPath.shift ();
 					end = newPath.pop ();
-					end.parent = start.child;
-					oldLength = count (start, end);
-					
-					while (newPath.length > 0)
-					{
-						node = newPath.shift ();
-						node.parent = start;
-						start.child = node;
-						start = node;
-					}
-					start.child = end;
-					end.parent = start;
-					start = path;
-					start.index += 1 + newLength - oldLength;
-					while (start != null)
-					{
-						if (start.child != null)
-							start.child.index = start.index - 1;
-						start = start.child;
-					}
+					oldLength = releasePath (start, end);
+					newLength = addPath (start, end, newPath, true);
+					updatePath (start);
 				}
-				else if (newPath [0].index < newPath [newPath.length - 1].index)
+				else if (newPath [0].index > newPath [newPath.length - 1].index)
 				{
 					start = newPath.pop ();
 					end = newPath.shift ();
-					end.parent = start.child;
-					oldLength = count (start, end);
-					while (newPath.length > 0)
-					{
-						node = newPath.pop ();
-						node.parent = start;
-						start.child = node;
-						start = node;
-					}
-					start.child = end;
-					end.parent = start;
-					start = path;
-					start.index += 1 + newLength - oldLength;
-					while (start != null)
-					{
-						if (start.child != null)
-							start.child.index = start.index - 1;
-						start = start.child;
-					}
+					oldLength = releasePath (start, end);
+					newLength = addPath (start, end, newPath, false);
+					updatePath (start);
 				}
 			}
 			current = current.child;
 		}
 	}
 	
-	private function dfsPath (current:Node):Array<Node>
+	private function releasePath (start:Node, end:Node):Int
+	{
+		var count:Int = 1;
+		var next:Node = start;
+		var current:Node = start.child;
+		while (current != null)
+		{
+			if (current == end) break;
+			count ++;
+			next = current.child;
+			current.index = -1;
+			current.parent = null;
+			current.child = null;
+			current = next;
+		}
+		start.child = null;
+		end.parent = null;
+		return count;
+	}
+	
+	private function addPath (start:Node, end:Node, newPath:Array<Node>, left:Bool):Int
+	{
+		var count:Int = newPath.length + 2;
+		var next:Node = null;
+		var current:Node = null;
+		while (newPath.length > 0)
+		{
+			next = left ? newPath.shift () : newPath.pop ();
+			if (current != null)
+			{
+				next.parent = current;
+				current.child = next;
+			}
+			else
+			{
+				start.child = next;
+				next.parent = start;
+			}
+			current = next;
+		}
+		
+		current.child = end;
+		end.parent = current;
+		
+		return count;
+	}
+	
+	private function updatePath (start:Node = null):Void
+	{
+		var current:Node = path;
+		
+		while (current != null)
+		{
+			if (current.parent == null)
+				current.index = 0;
+			else
+				current.index = current.parent.index + 1;
+			current = current.child;
+		}
+	}
+	
+	private function dfsPath (current:Node, debug:Bool = false):Array<Node>
 	{
 		var newLength:Int = 0;
 		var newPath:Array<Node> = [];
 		var checkPath:Array<Node> = null;
+		var inPath:Bool = current.parent != null || current.child != null;
 		
 		current.use = true;
+		if (debug) trace (current + " >> " + allValidMoves [current.x][current.y]);
 		for (near in allValidMoves [current.x][current.y])
 		{
+			if (debug) trace ("check " + nodes [near.x][near.y] + ", " + nodes [near.x][near.y].use + ", " + nodes [near.x][near.y].parent);
 			if (nodes [near.x][near.y].use) continue;
 			
-			if (nodes [near.x][near.y].parent != null)
+			if (nodes [near.x][near.y].parent != null || nodes [near.x][near.y].child != null)
+			{
+				if (inPath) continue;
 				checkPath = [near];
+			}
 			else
 			{
-				checkPath = dfsPath (near);
+				checkPath = dfsPath (near, debug);
 			}
+			
+			if (debug) trace ("--checkPath: " + checkPath);
 			
 			if (newPath.length < checkPath.length)
 			{
@@ -138,7 +176,6 @@ class AI4 extends Player
 				else
 				{
 					var pathLength:Int = count (current, checkPath [checkPath.length - 1]);
-					// trace (current + ", " + checkPath + " >> " + pathLength);
 					if (checkPath.length > pathLength && checkPath.length > newLength)
 					{
 						newLength = pathLength;

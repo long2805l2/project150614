@@ -34,21 +34,46 @@ class Game
 			}
 		}
 		
-		var x:Int = -1;
-		var y:Int = -1;
-		for (obstacle in 0 ... obstacles)
-		{
-			x = Std.random (Value.MAP_SIZE);
-			y = Std.random (Value.MAP_SIZE);
+		// var x:Int = -1;
+		// var y:Int = -1;
+		// for (obstacle in 0 ... obstacles)
+		// {
+			// x = Std.random (Value.MAP_SIZE);
+			// y = Std.random (Value.MAP_SIZE);
 			
 			// x ++;
 			// y = 1;
 			
-			map [x][y] = Value.BLOCK_OBSTACLE;
+			// map [x][y] = Value.BLOCK_OBSTACLE;
 			// map [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
 			
-			board [x][y] = Value.BLOCK_OBSTACLE;
+			// board [x][y] = Value.BLOCK_OBSTACLE;
 			// board [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
+		// }
+		
+		var cache:Array<Array<Int>> = [
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+			[0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1],
+			[0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0],
+			[0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+			[0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+			[0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0],
+			[0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+			[0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0],
+			[0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+			[1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+			[0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0],
+		];
+		for (x in 0 ... mapSize)
+		{
+			for (y in 0 ... mapSize)
+			{
+				if (cache [x][y] == 1)
+				{
+					map [y][x] = Value.BLOCK_OBSTACLE;
+					board [y][x] = Value.BLOCK_OBSTACLE;
+				}
+			}
 		}
 		
 		map [0][0] = Value.BLOCK_PLAYER_1;

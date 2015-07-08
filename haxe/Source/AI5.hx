@@ -32,7 +32,8 @@ class AI5 extends Player
 		
 		createVaildMoves ();
 		
-		dfs (nodes [myPosition.x][myPosition.y]);
+		Node.ID = 0;
+		art (nodes [myPosition.x][myPosition.y]);
 	}
 	
 	private function dfs (current:Node):Int
@@ -49,6 +50,26 @@ class AI5 extends Player
 		
 		current.index = sum;
 		return sum;
+	}
+	
+	private function art (current:Node):Void
+	{
+		current.visited = true;
+		current.low = current.num = Node.ID ++;
+		
+		for (near in allValidMoves [current.x][current.y])
+		{
+			if (!near.visited)
+			{
+				near.parent = current;
+				art (near);
+				
+				if (near.low >= current.num) current.isArticulation = true;
+				if (current.low > near.low) current.low = near.low;
+			}
+			else if (current.parent != near)
+				if (current.low > near.num) current.low = near.num;
+		}	
 	}
 	
 	private function createVaildMoves ():Void
@@ -92,7 +113,10 @@ class AI5 extends Player
 				if (blockCurrent == null) continue;
 				if (blockParent == null) continue;
 				
-				blockCurrent.text = "" + current.index;
+				blockCurrent.text = current.num + "\n" + current.low;
+				if (current.isArticulation)
+					blockCurrent.color = 0x22CCCC;
+				
 				cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
 				cv.graphics.lineTo (blockParent.x, blockParent.y);
 			}
@@ -102,8 +126,14 @@ class AI5 extends Player
 
 class Node extends Position
 {
+	public static var ID:Int = 0;
+	
 	public var parent:Node = null;
 	public var child:Node = null;
 	public var index:Int = -1;
+	public var low:Int = -1;
+	public var num:Int = -1;
+	public var visited:Bool = false;
+	public var isArticulation:Bool = false;
 	public var use:Bool = false;
 }

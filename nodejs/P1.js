@@ -8,6 +8,8 @@
 // ===========================================================
 
 // Get the host and port from argurment
+var VERSION = 1;
+
 var host = "127.0.0.1";
 var port = 3011;
 var key = 0;
@@ -102,6 +104,9 @@ function OnUpdatePacket(data, offset) {
 		ConvertVariable();
 		MyTurn();
 	}
+	else {
+		// Do something while waiting for your opponent
+	}
 }
 
 // Player need to give a command here
@@ -171,6 +176,7 @@ var socket = ws.connect ("ws://" + host + ":" + port, [], function () {
 	var data = "";
 	data += String.fromCharCode(COMMAND_SEND_KEY);
 	data += String.fromCharCode(key);
+	data += String.fromCharCode(VERSION);
 	Send (data);
 });
 socket.on("text", function (data) {
@@ -279,7 +285,7 @@ function tron ()
 	if (allValidMoves == null) createVaildMoves ();
 	
 	nextMove = null;
-	var score = negamax (myPosition, enemyPosition, 10, -1000, 1000);
+	var score = negamax (myPosition, enemyPosition, 14, -1000, 1000);
 	// console.log ("nextMove: " + nextMove.x + ", " + nextMove.y);
 	
 	var dir = -1;

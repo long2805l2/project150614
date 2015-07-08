@@ -94,42 +94,42 @@ public class Client {
 	//                            USER'S PART                              //
 	/////////////////////////////////////////////////////////////////////////
 	
-	// This function is called automatically when it's your turn.
-	// Remember to call AI_Move() with a valid move before the time is run out.
+	// This function is called automatically each turn.
+	// If it's your turn, remember to call AI_Move() with a valid move before the time is run out.
 	// Please check for provided APIs in Javadoc/index.html
 	public void AI_Update() {
-		int[] board = AI.getInstance().getBoard();	// Access block at (x, y) by using board[CONVERT_COORD(x,y)]
-		Position myPos = AI.getInstance().getMyPosition();
-		Position enemyPos = AI.getInstance().getEnemyPosition();
+		if(AI.getInstance().isMyTurn()) {
+			int[] board = AI.getInstance().getBoard();	// Access block at (x, y) by using board[CONVERT_COORD(x,y)]
+			Position myPos = AI.getInstance().getMyPosition();
+			Position enemyPos = AI.getInstance().getEnemyPosition();
 
-		//Just a silly bot with random moves
-		ArrayList<Character> freeMoves = new ArrayList<Character>();
-		if(myPos.x > 0 && AI.getInstance().getBlock(new Position(myPos.x - 1, myPos.y)) == BLOCK_EMPTY)
-		{
-			freeMoves.add(DIRECTION_LEFT);
-		}
-		if(myPos.x < MAP_SIZE-1 && AI.getInstance().getBlock(new Position(myPos.x + 1, myPos.y)) == BLOCK_EMPTY)
-		{
-			freeMoves.add(DIRECTION_RIGHT);
-		}
-		if(myPos.y > 0 && AI.getInstance().getBlock(new Position(myPos.x, myPos.y - 1)) == BLOCK_EMPTY)
-		{
-			freeMoves.add(DIRECTION_UP);
-		}
-		if(myPos.y < MAP_SIZE-1 && AI.getInstance().getBlock(new Position(myPos.x, myPos.y + 1)) == BLOCK_EMPTY)
-		{
-			freeMoves.add(DIRECTION_DOWN);
-		}
+			//Just a silly bot with random moves
+			ArrayList<Character> freeMoves = new ArrayList<Character>();
+			if(myPos.x > 0 && AI.getInstance().getBlock(new Position(myPos.x - 1, myPos.y)) == BLOCK_EMPTY) {
+				freeMoves.add(DIRECTION_LEFT);
+			}
+			if(myPos.x < MAP_SIZE-1 && AI.getInstance().getBlock(new Position(myPos.x + 1, myPos.y)) == BLOCK_EMPTY) {
+				freeMoves.add(DIRECTION_RIGHT);
+			}
+			if(myPos.y > 0 && AI.getInstance().getBlock(new Position(myPos.x, myPos.y - 1)) == BLOCK_EMPTY) {
+				freeMoves.add(DIRECTION_UP);
+			}
+			if(myPos.y < MAP_SIZE-1 && AI.getInstance().getBlock(new Position(myPos.x, myPos.y + 1)) == BLOCK_EMPTY) {
+				freeMoves.add(DIRECTION_DOWN);
+			}
 
-		int size = freeMoves.size();
-		if(size > 0)
-		{
-			Random r = new Random();
-			int direction = (int)freeMoves.get(r.nextInt(size));
-			LOG("Move: " + direction + "\n");
+			int size = freeMoves.size();
+			if(size > 0) {
+				Random r = new Random();
+				int direction = (int)freeMoves.get(r.nextInt(size));
+				LOG("Move: " + direction + "\n");
 
-			//Remember to call AI_Move() within allowed time
-			Game.getInstance().AI_Move(direction);
+				//Remember to call AI_Move() within allowed time
+				Game.getInstance().AI_Move(direction);
+			}
+		}
+		else {
+			// Do something while waiting for your opponent
 		}
 	}
 	
@@ -144,8 +144,12 @@ public class Client {
 		if (Game.getInstance().Connect(args) == 0) {
 			Game.getInstance().AI_Register();
 		
-			// Polling from server every 100 ms
-			Game.getInstance().PollingFromServer(100);
+			Game.getInstance().PollingFromServer();
 		}
+		else {
+			LOG("Failed to connect to server!\n");
+			System.exit(1);
+		}
+		System.exit(0);
 	}
 }

@@ -32,27 +32,47 @@ class AI5 extends Player
 		
 		createVaildMoves ();
 		
-		Node.ID = 0;
-		art (nodes [myPosition.x][myPosition.y]);
+		// for (x in 0 ... board.length)
+		// {
+			// for (y in 0 ... board [x].length)
+			// {
+				// if (board [x][y] != Value.BLOCK_EMPTY) continue;
+				
+				// for (x2 in 0 ... board.length)
+				// {
+					// for (y2 in 0 ... board [x2].length)
+					// {
+						// var node:Node = nodes [x2][y2];
+						// node.low = node.num = 0;
+						// node.parent = null;
+						// node.visited = false;
+					// }
+				// }
+				
+				Node.ID = 0;
+				// art (nodes [x][y]);
+				art (nodes [x][y]);
+			// }
+		// }
 	}
 	
 	private function dfs (current:Node):Int
 	{
 		var sum:Int = 1;
 		
-		for (near in allValidMoves [current.x][current.y])
-		{
-			if (near.parent != null) continue;
+		// for (near in allValidMoves [current.x][current.y])
+		// {
+			// if (near.parent != null) continue;
 			
-			near.parent = current;
-			sum += dfs (near);
-		}
+			// near.parent = current;
+			// sum += dfs (near);
+		// }
 		
-		current.index = sum;
+		// current.index = sum;
 		return sum;
 	}
 	
-	private function art (current:Node):Void
+	private function art (current:Node):Void//Int
 	{
 		current.visited = true;
 		current.low = current.num = Node.ID ++;
@@ -62,14 +82,18 @@ class AI5 extends Player
 			if (!near.visited)
 			{
 				near.parent = current;
+				// current.index +=
 				art (near);
 				
 				if (near.low >= current.num) current.isArticulation = true;
+				// if (near.low >= current.num) current.index += 1;
 				if (current.low > near.low) current.low = near.low;
 			}
 			else if (current.parent != near)
 				if (current.low > near.num) current.low = near.num;
-		}	
+		}
+		
+		// return current.index;
 	}
 	
 	private function createVaildMoves ():Void
@@ -113,9 +137,10 @@ class AI5 extends Player
 				if (blockCurrent == null) continue;
 				if (blockParent == null) continue;
 				
-				blockCurrent.text = current.num + "\n" + current.low;
+				// if (current.index > 0) blockCurrent.text = current.index + "";
+				// blockCurrent.text = current.num + "\n" + current.low;
 				if (current.isArticulation)
-					blockCurrent.color = 0x22CCCC;
+					blockCurrent.color = 0xCCCCCC;
 				
 				cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
 				cv.graphics.lineTo (blockParent.x, blockParent.y);
@@ -130,7 +155,7 @@ class Node extends Position
 	
 	public var parent:Node = null;
 	public var child:Node = null;
-	public var index:Int = -1;
+	public var index:Int = 0;
 	public var low:Int = -1;
 	public var num:Int = -1;
 	public var visited:Bool = false;

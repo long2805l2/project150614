@@ -731,12 +731,12 @@ static int _evaluate_board(gamestate s, int player, bool vis=false)
 
   // since each bot is in a separate component by definition here, it's OK to
   // destructively update cp for floodfill()
-#if VERBOSE >= 2
-  int cc0 = cp.connectedarea(s.p[0])-1;
-  int cc1 = cp.connectedarea(s.p[1])-1;
-  int cf0 = cp.fillablearea(s.p[0]);
-  int cf1 = cp.fillablearea(s.p[1]);
-#endif
+// #if VERBOSE >= 2
+  // int cc0 = cp.connectedarea(s.p[0])-1;
+  // int cc1 = cp.connectedarea(s.p[1])-1;
+  // int cf0 = cp.fillablearea(s.p[0]);
+  // int cf1 = cp.fillablearea(s.p[1]);
+// #endif
   // now ideally we would separate regions by articulation vertices and then
   // find the maximum traversable area.
   colorcount ccount0 = max_articulated_space(NULL, NULL, s.p[0]),
@@ -747,19 +747,19 @@ static int _evaluate_board(gamestate s, int player, bool vis=false)
   // if our estimate is really close, try some searching
   if(v != 0 && abs(v) <= 30000) {
     int _m;
-#if VERBOSE >= 2
-    if(vis) fprintf(stderr, "num_fillable %d %d too close to call; searching\n", ff0, ff1);
-#endif
+// #if VERBOSE >= 2
+    // if(vis) fprintf(stderr, "num_fillable %d %d too close to call; searching\n", ff0, ff1);
+// #endif
     ff0 = _spacefill(_m, cp, s.p[0], 3);
     ff1 = _spacefill(_m, cp, s.p[1], 3);
     v = 10000*(ff0-ff1);
   }
   if(player == 1) v = -v;
-#if VERBOSE >= 2
-  if(vis) {
-    fprintf(stderr, "player=%d connectedarea value: %d (0:%d/%d/%d 1:%d/%d/%d)\n", player, v, ff0,cf0,cc0, ff1,cf1,cc1);
-  }
-#endif
+// #if VERBOSE >= 2
+  // if(vis) {
+    // fprintf(stderr, "player=%d connectedarea value: %d (0:%d/%d/%d 1:%d/%d/%d)\n", player, v, ff0,cf0,cc0, ff1,cf1,cc1);
+  // }
+// #endif
   M(s.p[0])=1; M(s.p[1])=1;
   return v;
 }

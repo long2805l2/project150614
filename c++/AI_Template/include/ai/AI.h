@@ -37,8 +37,8 @@ private:
 	/// @see Position
 	Position m_enemyPosition;
 
-	/// Indicate the game is over or not.
-	bool m_gameOver;
+	/// Indicate it's the player's turn or not.
+	bool m_isMyTurn;
 
 	/// Set value for game board.
 	/// @param board pointer to array of MAP_SIZExMAP_SIZE integers.
@@ -62,9 +62,10 @@ private:
 	/// @return No return value.
 	void SetEnemyPosition(Position newPos);
 
-	/// Mark the current game as over.
+	///Set current turn is theplayer or not.
+	/// @param myTurn true if it's the player's turn.
 	/// @return No return value.
-	void EndGame();
+	void SetMyTurn(bool myTurn);
 
 public:
 	friend class Game;
@@ -130,7 +131,7 @@ public:
 	/// @return No return value.
 	Position GetEnemyPosition();
 
-	/// Function to check whether the game is over or not.
-	/// @return true if the game is over, and vice versa.
-	bool IsGameOver();
+	/// Function to check whether it's the player's turn or not.
+	/// @return true if it's the player's turn, and vice versa.
+	bool IsMyTurn();
 };

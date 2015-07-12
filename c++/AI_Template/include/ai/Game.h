@@ -24,9 +24,6 @@ using easywsclient::WebSocket;
 class Game
 {
 private:
-	/// Boolean value indicates whether it is your turn or not
-	static bool m_isMyTurn;
-
 	// +------------------+------+
 	// |       1 byte     |1 byte|
 	// +------------------+------+
@@ -86,10 +83,9 @@ public:
 	/// @return -1 if failed to connect, otherwise return 0.
 	int Connect(int argc, char* argv[]);
 
-	/// Polling from server every @e interval
-	/// @param interval measured in milliseconds
+	/// Polling from server
 	/// @return No return value.
-	void PollingFromServer(unsigned int interval);
+	void PollingFromServer();
 
 	// +------------------------+------------+
 	// |          1 byte        |   1 byte   |

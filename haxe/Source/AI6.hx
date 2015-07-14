@@ -79,9 +79,12 @@ class AI6 extends Player
 	private function attack ():Node
 	{
 		nextMove = null;
-		negamax ();
+		trace ("attack");
+		var deep:Int = available;
+		if (deep > 10) deep = 10;
+		negamax (nodes [myPosition.x][myPosition.y], nodes [enemyPosition.x][enemyPosition.y], deep, -1e6, 1e6);
 		
-		return negamax;
+		return nextMove;
 	}
 	
 	private function evaluate_pos (my:Node, enemy:Node):Int
@@ -91,7 +94,7 @@ class AI6 extends Player
 		var length:Int = queue.length;
 		var step:Int = 1;
 		
-		var myStep:Int = [];
+		var myStep:Array<Int> = [];
 		myStep [my.index] = 1;
 		step = 2;
 		while (length > 0)
@@ -112,7 +115,7 @@ class AI6 extends Player
 			length = queue.length;
 		}
 		
-		var enemyStep:Int = [];
+		var enemyStep:Array<Int> = [];
 		enemyStep [enemy.index] = 1;
 		step = 2;
 		queue = [enemy];
@@ -136,7 +139,7 @@ class AI6 extends Player
 		}
 		
 		var score:Int = 0;
-		length = myStep.length < enemyStep.length ? enemyStep.length < myStep.length;
+		length = myStep.length < enemyStep.length ? enemyStep.length : myStep.length;
 		for (i in 0 ... length)
 		{
 			if (enemyStep [i] < 1)
@@ -190,7 +193,11 @@ class AI6 extends Player
 	{
 		if (Math.abs (enemyPosition.x - myPosition.x) <= minManhattan
 		&&	Math.abs (enemyPosition.y - myPosition.y) <= minManhattan)
+		{
+			trace ("ATTACK");
+			phrase = ATTACK;
 			return attack ();
+		}
 		
 		if (nodes [Value.MAP_SIZE - enemyPosition.x - 1] != null)
 			return nodes [Value.MAP_SIZE - enemyPosition.x - 1][Value.MAP_SIZE - enemyPosition.y - 1];
@@ -255,25 +262,25 @@ class AI6 extends Player
 				if (x > 0)
 				{
 					if (board [x - 1][y] != Value.BLOCK_OBSTACLE) nears.push (nodes [x - 1][y]);
-					if (board [x - 1][y] != Value.BLOCK_EMPTY) connects.push (nodes [x - 1][y]);
+					if (board [x - 1][y] == Value.BLOCK_EMPTY) connects.push (nodes [x - 1][y]);
 				}
 				
 				if (y > 0 && board [x][y - 1] == Value.BLOCK_EMPTY)
 				{
 					if (board [x][y - 1] != Value.BLOCK_OBSTACLE) nears.push (nodes [x][y - 1]);
-					if (board [x][y - 1] != Value.BLOCK_EMPTY) connects.push (nodes [x][y - 1]);
+					if (board [x][y - 1] == Value.BLOCK_EMPTY) connects.push (nodes [x][y - 1]);
 				}
 				
 				if (x < Value.MAP_SIZE - 1 && board [x + 1][y] == Value.BLOCK_EMPTY)
 				{
 					if (board [x + 1][y] != Value.BLOCK_OBSTACLE) nears.push (nodes [x + 1][y]);
-					if (board [x + 1][y] != Value.BLOCK_EMPTY) connects.push (nodes [x + 1][y]);
+					if (board [x + 1][y] == Value.BLOCK_EMPTY) connects.push (nodes [x + 1][y]);
 				}
 				
 				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)
 				{
 					if (board [x][y + 1] != Value.BLOCK_OBSTACLE) nears.push (nodes [x][y + 1]);
-					if (board [x][y + 1] != Value.BLOCK_EMPTY) connects.push (nodes [x][y + 1]);
+					if (board [x][y + 1] == Value.BLOCK_EMPTY) connects.push (nodes [x][y + 1]);
 				}
 				
 				var node:Node = nodes [x][y];

@@ -58,6 +58,7 @@ class AI6 extends Player
 			
 			case FINAL:
 			updateBoard ();
+			nextMove = final ();
 		}
 		
 		return direction (nextMove);
@@ -76,10 +77,17 @@ class AI6 extends Player
 		return dir;
 	}
 	
+	private function final ():Node
+	{
+		return null;
+	}
+	
 	private function attack ():Node
 	{
+		if (isFinal ()) return final ();
+		
 		nextMove = null;
-		trace ("attack");
+		
 		var deep:Int = available;
 		if (deep > 10) deep = 10;
 		negamax (nodes [myPosition.x][myPosition.y], nodes [enemyPosition.x][enemyPosition.y], deep, -1e6, 1e6);
@@ -87,79 +95,55 @@ class AI6 extends Player
 		return nextMove;
 	}
 	
+	private function isFinal ():Bool
+	{
+		return false;
+	}
+	
 	private function evaluate_pos (my:Node, enemy:Node):Int
 	{
+		var myQueue:Array<Node> = [my];
+		var enemyQueue:Array<Node> = [enemy];
+		var sign:Array<Int> = [];
+		
 		var current:Node = null;
-		var queue:Array<Node> = [my];
-		var length:Int = queue.length;
-		var step:Int = 1;
-		
-		var myStep:Array<Int> = [];
-		myStep [my.index] = 1;
-		step = 2;
-		while (length > 0)
-		{
-			for (i in 0 ... length)
-			{
-				current = queue.pop ();
-				for (move in current.connects)
-				{
-					if (move.use) continue;
-					if (myStep [move.index] > 0) continue;
-					
-					myStep [move.index] = step;
-					queue.push (move);
-				}
-			}
-			step += 1;
-			length = queue.length;
-		}
-		
-		var enemyStep:Array<Int> = [];
-		enemyStep [enemy.index] = 1;
-		step = 2;
-		queue = [enemy];
-		length = queue.length;
-		while (length > 0)
-		{
-			for (i in 0 ... length)
-			{
-				current = queue.pop ();
-				for (move in current.connects)
-				{
-					if (move.use) continue;
-					if (enemyStep [move.index] > 0) continue;
-					
-					enemyStep [move.index] = step;
-					queue.push (move);
-				}
-			}
-			step += 1;
-			length = queue.length;
-		}
-		
+		var length:Int = 0;
 		var score:Int = 0;
-		length = myStep.length < enemyStep.length ? enemyStep.length : myStep.length;
-		for (i in 0 ... length)
+		
+		while (myQueue.length > 0 || enemyQueue.length > 0)
 		{
-			if (enemyStep [i] < 1)
+			length = myQueue.length;
+			for (i in 0 ... length)
 			{
-				if (myStep [i] > 1) score ++;
-				continue;
+				current = myQueue.pop ();
+				for (move in current.connects)
+				{
+					if (move.use) continue;
+					if (sign [move.index] > 0) continue;
+					
+					sign [move.index] = 1;
+					score += 1;
+					myQueue.push (move);
+				}
 			}
-			
-			if (myStep [i] < 1)
+
+			length = enemyQueue.length;
+			for (i in 0 ... length)
 			{
-				if (enemyStep [i] > 1) score --;
-				continue;
+				current = enemyQueue.pop ();
+				for (move in current.connects)
+				{
+					if (move.use) continue;
+					if (sign [move.index] > 0) continue;
+					
+					sign [move.index] = 2;
+					score -= 1;
+					enemyQueue.push (move);
+				}
 			}
-			
-			var d = myStep [i] - enemyStep [i];
-			if (d > 0) score --;
-			else if (d < 0) score ++;
 		}
 		
-		return score;
+		return myScore - enemyScore;
 	}
 	
 	private function negamax (my:Node, enemy:Node, depth:Int, a:Float, b:Float):Float
@@ -249,7 +233,17 @@ class AI6 extends Player
 		else
 		{
 			turnId = 1;
-			minManhattan = (Value.MAP_SIZE % 2 != 0) ? 5 : 0;
+			if (Value.MAP_SIZE % 2 != 0)
+			{
+				var centerX:Int = (Value.MAP_SIZE - 1) >> 1;
+				var centerY:Int = (Value.MAP_SIZE - 1) >> 1;
+				if (board [centerX][centerY] == Value.BLOCK_EMPTY)
+				{
+					if (board [centerX - 1][centerY] == Value.BLOCK_EMPTY
+					&&	board [centerX][centerY - 1] == Value.BLOCK_EMPTY)
+						minManhattan =  5;
+				}
+			}
 		}
 		
 		for (x in 0 ... board.length)

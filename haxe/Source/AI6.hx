@@ -73,7 +73,7 @@ class AI6 extends Player
 		return null;
 	}
 	
-	private function evaluate_pos (my:Position, enemy:Position):Int
+	private function evaluate_pos (my:Node, enemy:Node):Int
 	{
 		evaluateMark ++;
 		
@@ -139,7 +139,6 @@ class AI6 extends Player
 			var score = -negamax (enemy, move, depth - 1, -b, -a);
 			move.use = false;
 			
-			if (bestMove == null) bestMove = my;
 			if (score > a)
 			{
 				a = score;
@@ -147,6 +146,8 @@ class AI6 extends Player
 				if (a >= b) break;
 			}
 		}
+		
+		if (bestMove == null) return evaluate_pos (my, enemy);
 		
 		nextMove = bestMove;
 		return a;

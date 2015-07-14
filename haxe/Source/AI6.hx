@@ -7,9 +7,10 @@ class AI6 extends Player
 {
 	public static inline var INIT:Int = 0;
 	public static inline var COPY:Int = 1;
-	public static inline var ATTACK:Int = 2;
-	public static inline var CONFLICT:Int = 3;
-	public static inline var FINAL:Int = 4;
+	public static inline var CENTER:Int = 2;
+	public static inline var ATTACK:Int = 3;
+	public static inline var CONFLICT:Int = 4;
+	public static inline var FINAL:Int = 5;
 	public var phrase:Int = 0;
 	
 	public var nodes:Array<Array<Node>>;
@@ -18,6 +19,8 @@ class AI6 extends Player
 	public var turnId:Int = 0;
 	public var obstacle:Int = 0;
 	public var available:Int = 0;
+	
+	public var nextMove:Node = null;
 	
 	override public function myTurn ():Int
 	{
@@ -29,7 +32,8 @@ class AI6 extends Player
 			init ();
 			if (firstMove)
 			{
-				phrase = ATTACK;
+				phrase = CENTER;
+				nextMove = attack ();
 			}
 			else
 			{
@@ -40,6 +44,10 @@ class AI6 extends Player
 			case COPY:
 			updateBoard ();
 			nextMove = copy ();
+
+			case CENTER:
+			updateBoard ();
+			nextMove = attack ();
 			
 			case ATTACK:
 			updateBoard ();
@@ -70,65 +78,90 @@ class AI6 extends Player
 	
 	private function attack ():Node
 	{
-		return null;
+		nextMove = null;
+		negamax ();
+		
+		return negamax;
 	}
 	
 	private function evaluate_pos (my:Node, enemy:Node):Int
 	{
-		evaluateMark ++;
+		var current:Node = null;
+		var queue:Array<Node> = [my];
+		var length:Int = queue.length;
+		var step:Int = 1;
 		
-		var myValue:Int = 1;
-		var myZone:Array<Position> = [my];
-		
-		var enemyValue:Int = 1;
-		var enemyZone:Array<Position> = [enemy];
-		
-		var current:Position = null;
-		var temp:Array<Position> = null;
-		while (myZone.length != 0 || enemyZone.length != 0)
+		var myStep:Int = [];
+		myStep [my.index] = 1;
+		step = 2;
+		while (length > 0)
 		{
-			temp = [];
-			while (myZone.length > 0)
+			for (i in 0 ... length)
 			{
-				current = myZone.pop ();
-				for (move in allValidMoves [current.x][current.y])
+				current = queue.pop ();
+				for (move in current.connects)
 				{
-					if (board [move.x][move.y] == Value.BLOCK_EMPTY)
-					if (evaluateData [move.x][move.y] != evaluateMark)
-					{
-						evaluateData [move.x][move.y] = evaluateMark;
-						temp.push (move);
-						myValue ++;
-					}
+					if (move.use) continue;
+					if (myStep [move.index] > 0) continue;
+					
+					myStep [move.index] = step;
+					queue.push (move);
 				}
 			}
-			myZone = temp;
-
-			temp = [];
-			while (enemyZone.length > 0)
-			{
-				current = enemyZone.pop ();
-				for (move in allValidMoves [current.x][current.y])
-				{
-					if (board [move.x][move.y] == Value.BLOCK_EMPTY)
-					if (evaluateData [move.x][move.y] != evaluateMark)
-					{
-						evaluateData [move.x][move.y] = evaluateMark;
-						temp.push (move);
-						enemyValue ++;
-					}
-				}
-			}
-			enemyZone = temp;
+			step += 1;
+			length = queue.length;
 		}
 		
-		return myValue - enemyValue;
+		var enemyStep:Int = [];
+		enemyStep [enemy.index] = 1;
+		step = 2;
+		queue = [enemy];
+		length = queue.length;
+		while (length > 0)
+		{
+			for (i in 0 ... length)
+			{
+				current = queue.pop ();
+				for (move in current.connects)
+				{
+					if (move.use) continue;
+					if (enemyStep [move.index] > 0) continue;
+					
+					enemyStep [move.index] = step;
+					queue.push (move);
+				}
+			}
+			step += 1;
+			length = queue.length;
+		}
+		
+		var score:Int = 0;
+		length = myStep.length < enemyStep.length ? enemyStep.length < myStep.length;
+		for (i in 0 ... length)
+		{
+			if (enemyStep [i] < 1)
+			{
+				if (myStep [i] > 1) score ++;
+				continue;
+			}
+			
+			if (myStep [i] < 1)
+			{
+				if (enemyStep [i] > 1) score --;
+				continue;
+			}
+			
+			var d = myStep [i] - enemyStep [i];
+			if (d > 0) score --;
+			else if (d < 0) score ++;
+		}
+		
+		return score;
 	}
 	
 	private function negamax (my:Node, enemy:Node, depth:Int, a:Float, b:Float):Float
 	{
-		if (depth == 0 || my.connects.length == 0)
-			return evaluate_pos (my, enemy);
+		if (depth == 0 || my.connects.length == 0) return evaluate_pos (my, enemy);
 		
 		var bestMove:Node = null;
 		for (move in my.connects)
@@ -162,6 +195,11 @@ class AI6 extends Player
 		if (nodes [Value.MAP_SIZE - enemyPosition.x - 1] != null)
 			return nodes [Value.MAP_SIZE - enemyPosition.x - 1][Value.MAP_SIZE - enemyPosition.y - 1];
 		
+		return null;
+	}
+	
+	private function center ():Node
+	{
 		return null;
 	}
 	

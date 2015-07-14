@@ -27,7 +27,8 @@ class Value
 	public static var DIRECTION_DOWN:Int = 4;
 	
 	public static var MAP_SIZE:Int = 11;
-	public static var OBSTACLES:Int = 40;
+	public static var OBSTACLES:Int = 5;
+	public static var MIRROR:Bool = true;
 	public static var TURN_TIME:Int = 5;
 	
 	public static var BLOCK_SIZE:Int = 50;

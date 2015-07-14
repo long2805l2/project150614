@@ -32,92 +32,50 @@ class AI5 extends Player
 		
 		createVaildMoves ();
 		
-		Node.ID = 0;
-		art (nodes [x][y]);
-		// chamber (art (nodes [x][y]));
-		room ();
-	}
-	
-	private function chamber (gateways:Array<Node>):Void
-	{
-		var currentColor:Int = 1;
-		gateways.sort (function (a:Node, b:Node):Int
-		{
-			if (a.num > b.num) return 1;
-			if (a.num < b.num) return -1;
-			return 0;
-		});
-		for (gateway in gateways) gateway.index = gateway.color = currentColor ++;
-		
-		currentColor = 1;
-		for (gateway in gateways)
-		{
-			for (node in allValidMoves [gateway.x][gateway.y])
-			{
-				if (node.color > 0) continue;
-				node.size = floodFill (node, currentColor);
+		// for (x in 0 ... board.length)
+		// {
+			// for (y in 0 ... board [x].length)
+			// {
+				// if (board [x][y] != Value.BLOCK_EMPTY) continue;
 				
-				currentColor ++;
-			}
-		}
+				// for (x2 in 0 ... board.length)
+				// {
+					// for (y2 in 0 ... board [x2].length)
+					// {
+						// var node:Node = nodes [x2][y2];
+						// node.low = node.num = 0;
+						// node.parent = null;
+						// node.visited = false;
+					// }
+				// }
+				
+				Node.ID = 0;
+				// art (nodes [x][y]);
+				art (nodes [x][y]);
+			// }
+		// }
 	}
 	
-	private function floodFill (start:Node, color:Int):Int
+	private function dfs (current:Node):Int
 	{
-		var queue:Array<Node> = [start];
-		var current:Node = null;
-		var length:Int = queue.length;
-		var size:Int = 1;
+		var sum:Int = 1;
 		
-		start.color = color;
-		while (queue.length > 0)
-		{
-			for (index in 0 ... length)
-			{
-				current = queue.shift ();
-				for (near in allValidMoves [current.x][current.y])
-				{
-					if (near.color > 0) continue;
-					near.color = color;
-					queue.push (near);
-					size += 1;
-				}
-			}
-			length = queue.length;
-		}
+		// for (near in allValidMoves [current.x][current.y])
+		// {
+			// if (near.parent != null) continue;
+			
+			// near.parent = current;
+			// sum += dfs (near);
+		// }
 		
-		return size;
+		// current.index = sum;
+		return sum;
 	}
 	
-	private function refill (start:Node, newColor:Int):Void
-	{
-		var queue:Array<Node> = [start];
-		var current:Node = null;
-		var length:Int = queue.length;
-		
-		var oldColor:Int = start.color;
-		start.color = newColor;
-		while (queue.length > 0)
-		{
-			for (index in 0 ... length)
-			{
-				current = queue.shift ();
-				for (near in allValidMoves [current.x][current.y])
-				{
-					if (near.color != oldColor) continue;
-					near.color = newColor;
-					queue.push (near);
-				}
-			}
-			length = queue.length;
-		}
-	}
-	
-	private function art (current:Node):Array<Node>
+	private function art (current:Node):Void//Int
 	{
 		current.visited = true;
 		current.low = current.num = Node.ID ++;
-		var arts:Array<Node> = [];
 		
 		for (near in allValidMoves [current.x][current.y])
 		{
@@ -125,62 +83,17 @@ class AI5 extends Player
 			{
 				near.parent = current;
 				// current.index +=
-				var a:Array<Node> = art (near);
-				for (n in a) arts.push (n);
+				art (near);
 				
-				if (near.low >= current.num)
-				{
-					current.isArticulation = true;
-					arts.push (current);
-				}
-				
-				if (near.low < current.low) current.low = near.low;
+				if (near.low >= current.num) current.isArticulation = true;
+				// if (near.low >= current.num) current.index += 1;
+				if (current.low > near.low) current.low = near.low;
 			}
 			else if (current.parent != near)
 				if (current.low > near.num) current.low = near.num;
 		}
 		
-		return arts;
-	}
-	
-	private function room ():Void
-	{
-		var nextclass:Int = 1;
-		
-		for (y in 0 ... Value.MAP_SIZE)
-		{
-			for (x in 0 ... Value.MAP_SIZE)
-			{
-				if (board [x][y] != Value.BLOCK_EMPTY) continue;
-				
-				var current:Node = nodes [x][y];
-				var top:Int = y > 0 ? nodes [x][y - 1].color : 0;
-				var left:Int = x > 0 ? nodes [x - 1][y].color : 0;
-				
-				if (top < 1 && left < 1) // new component
-				{
-					current.color = nextclass ++;
-				}
-				else if (top == left) // existing component
-				{
-					current.color = top;
-				}
-				else // join components
-				{
-					// deprecate the higher-numbered component in favor of the lower
-					if(left < 1 || (top > 0 && top < left))
-					{
-						current.color = top;
-						// if (left > 0) refill (nodes [x - 1][y], top);
-					}
-					else
-					{
-						current.color = left;
-						// if (top > 0) refill (nodes [x][y - 1], left);
-					}
-				}
-			}
-		}
+		// return current.index;
 	}
 	
 	private function createVaildMoves ():Void
@@ -193,55 +106,11 @@ class AI5 extends Player
 			{
 				allValidMoves [x][y] = [];
 				if (board [x][y] == Value.BLOCK_OBSTACLE) continue;
+				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (nodes [x][y + 1]);
+				if (x < Value.MAP_SIZE - 1 && board [x + 1][y] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (nodes [x + 1][y]);
 				if (x > 0 && board [x - 1][y] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (nodes [x - 1][y]);
 				if (y > 0 && board [x][y - 1] == Value.BLOCK_EMPTY) 					allValidMoves [x][y].push (nodes [x][y - 1]);
-				if (x < Value.MAP_SIZE - 1 && board [x + 1][y] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (nodes [x + 1][y]);
-				if (y < Value.MAP_SIZE - 1 && board [x][y + 1] == Value.BLOCK_EMPTY)	allValidMoves [x][y].push (nodes [x][y + 1]);
 			}
-		}
-	}
-	
-	private function isOpen (n:Int, min:Int, max:Int):Bool
-	{
-		var i:Int = min;
-		while (i <= max)
-		{
-			if (n & (1 << (i & 7)) != 0) return false;
-			i ++;
-		}
-		return true;
-	}
-	
-	private function potential_articulation (n:Int):Int
-	{
-		var i:Int = 1;
-		while (i < 7)
-		{
-			if (n & (1 << i) != 0) continue;
-			
-			var j:Int = i + 2;
-			while (j <= 7)
-			{
-				if (n & (1 << j) != 0)
-				{
-					j += 2;
-					continue;
-				}
-				
-				if (!is_open (n, i + 1, j - 1) && !is_open (n, j + 1, i + 7))
-					return 1;
-				
-				j += 2;
-			}
-			i += 2;
-		}
-		return 0;
-	}
-	
-	int main()
-	{
-		for(int n=0;n<256;n++)
-			potential_articulation(n));
 		}
 	}
 	
@@ -260,35 +129,21 @@ class AI5 extends Player
 			{
 				current = nodes [x][y];
 				if (current == null) continue;
-				// if (current.parent == null) continue;
+				if (current.parent == null) continue;
 				
 				var blockCurrent:Block = canvas.getBlock (current.x, current.y);
-				// var blockParent:Block = canvas.getBlock (current.parent.x, current.parent.y);
+				var blockParent:Block = canvas.getBlock (current.parent.x, current.parent.y);
 				
 				if (blockCurrent == null) continue;
-				// if (blockParent == null) continue;
+				if (blockParent == null) continue;
 				
-				// if (current.parent.isArticulation)
-				// {
-					// blockCurrent.text = current.size + "";
-					// blockCurrent.color = 0xEEEEEE;
-				// }
-				// else if (current.isArticulation)
-					// blockCurrent.color = 0xBBBBBB;				
-				// else
-				if (current.color > 0)
-					blockCurrent.text = current.color + "";
+				// if (current.index > 0) blockCurrent.text = current.index + "";
+				blockCurrent.text = "" + current.low;
+				if (current.isArticulation)
+					blockCurrent.color = 0xCCCCCC;
 				
-				// cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
-				// cv.graphics.lineTo (blockParent.x, blockParent.y);
-				
-				// if (board [x][y] == Value.BLOCK_EMPTY)
-				// {
-					// if ((current.x ^ current.y) & 1 == 1)
-						// blockCurrent.color = 0xFF5555;
-					// else
-						// blockCurrent.color = 0x555555;
-				// }
+				cv.graphics.moveTo (blockCurrent.x, blockCurrent.y);
+				cv.graphics.lineTo (blockParent.x, blockParent.y);
 			}
 		}
 	}
@@ -301,8 +156,6 @@ class Node extends Position
 	public var parent:Node = null;
 	public var child:Node = null;
 	public var index:Int = 0;
-	public var size:Int = 0;
-	public var color:Int = 0;
 	public var low:Int = -1;
 	public var num:Int = -1;
 	public var visited:Bool = false;

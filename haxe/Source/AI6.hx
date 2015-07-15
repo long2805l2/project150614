@@ -16,6 +16,7 @@ class AI6 extends Player
 	public var nodes:Array<Array<Node>>;
 	public var firstMove:Bool = false;
 	public var minManhattan:Int = 0;
+	public var centerNode:Node = null;
 	public var turnId:Int = 0;
 	public var obstacle:Int = 0;
 	public var available:Int = 0;
@@ -32,8 +33,16 @@ class AI6 extends Player
 			init ();
 			if (firstMove)
 			{
-				phrase = CENTER;
-				nextMove = attack ();
+				if (centerNode != null)
+				{
+					phrase = CENTER;
+					nextMove = center ();
+				}
+				else
+				{
+					phrase = ATTACK;
+					nextMove = attack ();
+				}
 			}
 			else
 			{
@@ -47,7 +56,7 @@ class AI6 extends Player
 
 			case CENTER:
 			updateBoard ();
-			nextMove = attack ();
+			nextMove = center ();
 			
 			case ATTACK:
 			updateBoard ();
@@ -61,18 +70,13 @@ class AI6 extends Player
 			nextMove = final ();
 		}
 		
-		return direction (nextMove);
-	}
-	
-	private function direction (node:Node):Int
-	{
-		if (node == null) return -1;
+		if (nextMove == null) return -1;
 		
 		var dir:Int = -1;
-		if (this.x - 1 == node.x)			dir = Value.DIRECTION_LEFT;
-		else if (this.x + 1 == node.x)		dir = Value.DIRECTION_RIGHT;
-		else if (this.y - 1 == node.y)		dir = Value.DIRECTION_UP;
-		else if (this.y + 1 == node.y)		dir = Value.DIRECTION_DOWN;
+		if (this.x - 1 == nextMove.x)			dir = Value.DIRECTION_LEFT;
+		else if (this.x + 1 == nextMove.x)		dir = Value.DIRECTION_RIGHT;
+		else if (this.y - 1 == nextMove.y)		dir = Value.DIRECTION_UP;
+		else if (this.y + 1 == nextMove.y)		dir = Value.DIRECTION_DOWN;
 		
 		return dir;
 	}
@@ -168,8 +172,7 @@ class AI6 extends Player
 		}
 		
 		if (bestMove == null) return evaluate_pos (my, enemy);
-		
-		nextMove = bestMove;
+		else nextMove = bestMove;
 		return a;
 	}
 	
@@ -178,15 +181,17 @@ class AI6 extends Player
 		if (Math.abs (enemyPosition.x - myPosition.x) <= minManhattan
 		&&	Math.abs (enemyPosition.y - myPosition.y) <= minManhattan)
 		{
-			trace ("ATTACK");
 			phrase = ATTACK;
 			return attack ();
 		}
 		
-		if (nodes [Value.MAP_SIZE - enemyPosition.x - 1] != null)
-			return nodes [Value.MAP_SIZE - enemyPosition.x - 1][Value.MAP_SIZE - enemyPosition.y - 1];
+		if (nodes [Value.MAP_SIZE - enemyPosition.x - 1] == null)
+		{
+			phrase = ATTACK;
+			return attack ();
+		}
 		
-		return null;
+		return nodes [Value.MAP_SIZE - enemyPosition.x - 1][Value.MAP_SIZE - enemyPosition.y - 1];
 	}
 	
 	private function center ():Node
@@ -237,6 +242,8 @@ class AI6 extends Player
 			{
 				var centerX:Int = (Value.MAP_SIZE - 1) >> 1;
 				var centerY:Int = (Value.MAP_SIZE - 1) >> 1;
+				centerNode = nodes [centerX][centerY];
+				
 				if (board [centerX][centerY] == Value.BLOCK_EMPTY)
 				{
 					if (board [centerX - 1][centerY] == Value.BLOCK_EMPTY

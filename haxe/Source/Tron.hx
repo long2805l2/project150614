@@ -245,7 +245,7 @@ class Tron extends Player
 			{
 				a = score;
 				bestMove = move;
-				if (a >= b) break;
+				// if (a >= b) break;
 			}
 			else if (bestMove == my) bestMove = move;
 		}

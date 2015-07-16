@@ -285,7 +285,7 @@ function tron ()
 	if (allValidMoves == null) createVaildMoves ();
 	
 	nextMove = null;
-	var score = negamax (myPosition, enemyPosition, 14, -1000, 1000);
+	var score = negamax (myPosition, enemyPosition, 16, -1000, 1000);
 	// console.log ("nextMove: " + nextMove.x + ", " + nextMove.y);
 	
 	var dir = -1;
@@ -385,7 +385,7 @@ function negamax (my, enemy, depth, a, b)
 		{
 			a = score;
 			bestMove = move;
-			if (a >= b) break;
+			// if (a >= b) break;
 		}
 		else if (bestMove == my) bestMove = move;
 	}

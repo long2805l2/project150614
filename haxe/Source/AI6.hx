@@ -147,12 +147,13 @@ class AI6 extends Player
 			}
 		}
 		
-		return myScore - enemyScore;
+		return score;
 	}
 	
 	private function negamax (my:Node, enemy:Node, depth:Int, a:Float, b:Float):Float
 	{
-		if (depth == 0 || my.connects.length == 0) return evaluate_pos (my, enemy);
+		if (depth == 0) return evaluate_pos (my, enemy);
+		if (my.connects.length == 0) return a;
 		
 		var bestMove:Node = null;
 		for (move in my.connects)
@@ -167,12 +168,12 @@ class AI6 extends Player
 			{
 				a = score;
 				bestMove = move;
-				if (a >= b) break;
+				// if (a >= b) break;
 			}
 		}
 		
-		if (bestMove == null) return evaluate_pos (my, enemy);
-		else nextMove = bestMove;
+		if (bestMove == null) return a;
+		nextMove = bestMove;
 		return a;
 	}
 	
@@ -199,14 +200,22 @@ class AI6 extends Player
 		return null;
 	}
 	
+	private var oldMy:Node;
+	private var oldEnemy:Node;
 	private function updateBoard ():Void
 	{
-		for (x in 0 ... nodes.length)
-		for (y in 0 ... nodes [x].length)
-		for (node in nodes [x][y].connects)
-			if (board [node.x][node.y] != Value.BLOCK_EMPTY)
-				nodes [x][y].connects.remove (node);
-				
+		var current:Node = nodes [myPosition.x][myPosition.y];
+		for (node in current.connects) node.connects.remove (current);
+		
+		if (oldMy != null) while (oldMy.connects.length > 0) oldMy.connects.pop ();
+		oldMy = current;
+		
+		current = nodes [enemyPosition.x][enemyPosition.y];
+		for (node in current.connects) node.connects.remove (current);
+		
+		if (oldEnemy != null) while (oldEnemy.connects.length > 0) oldEnemy.connects.pop ();
+		oldEnemy = current;
+		
 		turnId += 2;
 		available -= 2;
 	}

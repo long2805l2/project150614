@@ -32,15 +32,15 @@ class Tron extends Player
 		else updateVaildMoves ();
 		
 		nextMove = null;
-		switch (state)
-		{
-			case Tron.DIVIDE:
-			evaluate_map ();
+		// switch (state)
+		// {
+			// case Tron.DIVIDE:
+			// evaluate_map ();
 			var score = negamax (myPosition, enemyPosition, 12, -1e6, 1e6);
 			
-			case Tron.CONQUER:
-			var score = minimax (myPosition, 3, true);
-		}
+			// case Tron.CONQUER:
+			// var score = minimax (myPosition, 15, true);
+		// }
 		
 		var dir:Int = -1;
 		if (this.x - 1 == nextMove.x)			dir = Value.DIRECTION_LEFT;
@@ -245,7 +245,7 @@ class Tron extends Player
 			{
 				a = score;
 				bestMove = move;
-				// if (a >= b) break;
+				if (a >= b) break;
 			}
 			else if (bestMove == my) bestMove = move;
 		}

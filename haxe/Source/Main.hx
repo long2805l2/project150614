@@ -2,8 +2,10 @@ package;
 
 import flash.events.Event;
 import flash.events.MouseEvent;
+import flash.events.KeyboardEvent;
 import flash.display.Sprite;
 import flash.display.DisplayObject;
+import flash.Lib;
 
 class Main extends Sprite
 {
@@ -13,6 +15,7 @@ class Main extends Sprite
 	private var randomBtn:Button;
 	private var resetBtn:Button;
 	private var controlBtn:Button;
+	private var humanBtn:Button;
 	private var debuglBtn:Button;
 	
 	public function new ()
@@ -48,12 +51,20 @@ class Main extends Sprite
 		debuglBtn.x = 700;
 		debuglBtn.y = 70 + 40 + 10 + 40 + 10 + 40 + 10;
 		debuglBtn.addEventListener (MouseEvent.CLICK, onDebug);
-		addChild (debuglBtn);
+		// addChild (debuglBtn);
+		
+		humanBtn = new Button (0x8F8F8F, "<font color=\"#FFFFFF\">A.I.</font>", 160, 40);
+		humanBtn.x = 700;
+		humanBtn.y = 70 + 40 + 10 + 40 + 10 + 40 + 10 + 40 + 10;
+		humanBtn.name = "ai";
+		humanBtn.addEventListener (MouseEvent.CLICK, onHuman);
+		addChild (humanBtn);
 		
 		addEventListener (Event.ENTER_FRAME, onEnterFrame);
+		Lib.current.stage.addEventListener (KeyboardEvent.KEY_UP, onKeyDown);
 	}
 
-	public function onControl (e:MouseEvent):Void
+	private function onControl (e:MouseEvent):Void
 	{
 		trace ("onControl");
 		if (game == null) return;
@@ -78,7 +89,7 @@ class Main extends Sprite
 		}
 	}
 
-	public function onRandom (e:MouseEvent):Void
+	private function onRandom (e:MouseEvent):Void
 	{
 		game = new Game (Value.MAP_SIZE, Value.OBSTACLES);
 		board.draw (game.getBoard ());
@@ -88,8 +99,33 @@ class Main extends Sprite
 		controlBtn.name = "play";
 		controlBtn.text = "<font color=\"#FFFFFF\">Play</font>";
 	}
+	
+	private var humanTurn:Int = -1;
+	private function onHuman (e:MouseEvent):Void
+	{
+		if (game == null) return;
+		
+		humanMove = -1;
+		switch (humanBtn.name)
+		{
+			case "ai":
+			humanTurn = Value.TURN_PLAYER_1;
+			humanBtn.name = "human1";
+			humanBtn.text = "<font color=\"#FFFFFF\">Human 1</font>";
+			
+			case "human1":
+			humanTurn = Value.TURN_PLAYER_2;
+			humanBtn.name = "human2";
+			humanBtn.text = "<font color=\"#FFFFFF\">Human 2</font>";
+			
+			case "human2":
+			humanTurn = -1;
+			humanBtn.name = "ai";
+			humanBtn.text = "<font color=\"#FFFFFF\">A.I.</font>";
+		}			
+	}
 
-	public function onReset (e:MouseEvent):Void
+	private function onReset (e:MouseEvent):Void
 	{
 		if (game != null) game.reset ();
 		
@@ -97,7 +133,7 @@ class Main extends Sprite
 		controlBtn.text = "<font color=\"#FFFFFF\">Play</font>";
 	}
 
-	public function onDebug (e:MouseEvent):Void
+	private function onDebug (e:MouseEvent):Void
 	{
 		trace ("onDebug: " + game);
 		if (game != null)
@@ -105,7 +141,19 @@ class Main extends Sprite
 			timer = 0xFFFFFF;
 			
 			if (!game.isPlay ()) onControl (e);
-			game.update (board);
+			// game.update (board);
+		}
+	}
+	
+	private var humanMove:Int = -1;
+	private function onKeyDown (e:KeyboardEvent):Void
+	{
+		switch (e.keyCode)
+		{
+			case 37:	humanMove = Value.DIRECTION_LEFT;
+			case 38:	humanMove = Value.DIRECTION_UP;
+			case 39:	humanMove = Value.DIRECTION_RIGHT;
+			case 40:	humanMove = Value.DIRECTION_DOWN;
 		}
 	}
 	
@@ -114,10 +162,15 @@ class Main extends Sprite
 	{
 		if (game != null)
 		{
+			if (game.turn == humanTurn)
+			if (humanMove == -1) return;
+			
 			if (timer-- > 0) return;
 			timer = Value.TURN_TIME;
 			
-			game.update ();
+			game.update (humanMove);
+			humanMove = -1;
+			
 			board.draw (game.board);
 			board.path (game.pathPlayer1, Value.BLOCK_PLAYER_1);
 			board.path (game.pathPlayer2, Value.BLOCK_PLAYER_2);

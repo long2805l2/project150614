@@ -27,6 +27,7 @@ class AI6 extends Player
 	{
 		var nextMove:Node = null;
 		
+		// trace ("turn: " + turnId + "/" + phrase);
 		switch (phrase)
 		{
 			case INIT:
@@ -93,9 +94,15 @@ class AI6 extends Player
 		nextMove = null;
 		
 		var deep:Int = available;
-		if (deep > 10) deep = 10;
-		negamax (nodes [myPosition.x][myPosition.y], nodes [enemyPosition.x][enemyPosition.y], deep, -1e6, 1e6);
+		if (deep > 12) deep = 12;
+		// trace ("	" + nodes [myPosition.x][myPosition.y].connects);
+		// trace ("	" + nodes [enemyPosition.x][enemyPosition.y].connects);
 		
+		nodes [enemyPosition.x][enemyPosition.y].use = true;
+		negamax (nodes [myPosition.x][myPosition.y], nodes [enemyPosition.x][enemyPosition.y], deep, -1e6, 1e6);
+		nodes [enemyPosition.x][enemyPosition.y].use = false;
+		
+		// trace ("turn: " + turnId + " move: " + nextMove + " << " + nodes [myPosition.x][myPosition.y].connects);
 		return nextMove;
 	}
 	
@@ -150,29 +157,35 @@ class AI6 extends Player
 		return score;
 	}
 	
-	private function negamax (my:Node, enemy:Node, depth:Int, a:Float, b:Float):Float
+	private function negamax (my:Node, enemy:Node, depth:Int, a:Float, b:Float, path:String = ""):Float
 	{
-		if (depth == 0) return evaluate_pos (my, enemy);
-		if (my.connects.length == 0) return a;
+		if (depth == 0 || my.connects.length == 0)
+		{
+			var s:Float = evaluate_pos (my, enemy);
+			// trace (path + ", " + my + ", " + enemy + " >> " + s);
+			return s;
+		}
 		
 		var bestMove:Node = null;
+		var bestScore:Float = 0;
 		for (move in my.connects)
 		{
 			if (move.use) continue;
 			
 			move.use = true;
-			var score = -negamax (enemy, move, depth - 1, -b, -a);
+			var score = -negamax (enemy, move, depth - 1, -b, -a);//, path + ", " + my);
 			move.use = false;
 			
-			if (score > a)
+			if (score > bestScore || bestMove == null)
 			{
-				a = score;
+				bestScore = score;
 				bestMove = move;
-				// if (a >= b) break;
+				
+				if (bestScore > a) a = bestScore;
+				if (a >= b) break;
 			}
 		}
 		
-		if (bestMove == null) return a;
 		nextMove = bestMove;
 		return a;
 	}

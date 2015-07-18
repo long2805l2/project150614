@@ -7,8 +7,8 @@ class Game
 	private var obstacles:Int;
 	public var board:Array<Array<Int>>;
 	
-	private var state:Int;
-	private var turn:Int;
+	public var state (default, null):Int;
+	public var turn (default, null):Int;
 	
 	public var player1:Player;
 	public var pathPlayer1:Array<Position>;
@@ -41,9 +41,6 @@ class Game
 			x = Std.random (Value.MAP_SIZE);
 			y = Std.random (Value.MAP_SIZE);
 			
-			// x ++;
-			// y = 1;
-			
 			map [x][y] = Value.BLOCK_OBSTACLE;
 			if (Value.MIRROR) map [Value.MAP_SIZE - x - 1][Value.MAP_SIZE - y - 1] = Value.BLOCK_OBSTACLE;
 			
@@ -52,17 +49,17 @@ class Game
 		}
 		
 		// var cache:Array<Array<Int>> = [
-			// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-			// [0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1],
-			// [0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0],
+			// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			// [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			// [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0],
 			// [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-			// [0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
-			// [0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0],
-			// [0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-			// [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0],
-			// [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
-			// [1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-			// [0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0],
+			// [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+			// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			// [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+			// [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+			// [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+			// [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+			// [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 		// ];
 		// for (x in 0 ... mapSize)
 		// {
@@ -158,11 +155,12 @@ class Game
 		}
 		
 		state = Value.GAMESTATE_COMMENCING;
-		turn = Value.TURN_PLAYER_1;
+		turn = Math.random () > 0.5 ? Value.TURN_PLAYER_1 : Value.TURN_PLAYER_2;
 	}
 	
-	public function update (?canvas:Board):Void
+	public function update (humanMove:Int = -1):Void
 	{
+		// trace ("update: " + state + "/" + turn);
 		switch (state)
 		{
 			case Value.GAMESTATE_WAIT_FOR_PLAYER:
@@ -171,9 +169,9 @@ class Game
 			{
 				case Value.TURN_PLAYER_1:
 					player1.update (player2.position, getBoard ());
-					var dir:Int = player1.myTurn ();
-					if (canvas != null) player1.debug (canvas);
 					
+					var dir:Int = humanMove;
+					if (dir == -1) dir = player1.myTurn ();
 					if (validMove (player1.position, dir))
 					{
 						turn = Value.TURN_PLAYER_2;
@@ -183,13 +181,16 @@ class Game
 						pathPlayer1.push (new Position (player1.x, player1.y));
 					}
 					else
+					{
+						trace ("Player 1 dead: " + player1.position + " >> " + dir);
 						state = Value.GAMESTATE_END;
+					}
 				
 				case Value.TURN_PLAYER_2:
 					player2.update (player1.position, getBoard ());
-					if (canvas != null) player2.debug (canvas);
 					
-					var dir:Int = player2.myTurn ();
+					var dir:Int = humanMove;
+					if (dir == -1) dir = player2.myTurn ();
 					if (validMove (player2.position, dir))
 					{
 						turn = Value.TURN_PLAYER_1;
@@ -199,7 +200,10 @@ class Game
 						pathPlayer2.push (new Position (player2.x, player2.y));
 					}
 					else
+					{
+						trace ("Player 2 dead: " + player2.position + " >> " + dir);
 						state = Value.GAMESTATE_END;
+					}
 			}
 			case Value.GAMESTATE_END:
 		}

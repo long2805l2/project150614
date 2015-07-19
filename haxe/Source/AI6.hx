@@ -94,13 +94,16 @@ class AI6 extends Player
 		nextMove = null;
 		
 		var deep:Int = available;
-		if (deep > 12) deep = 12;
+		// if (deep > 12)
+			deep = 12;
 		// trace ("	" + nodes [myPosition.x][myPosition.y].connects);
 		// trace ("	" + nodes [enemyPosition.x][enemyPosition.y].connects);
 		
+		nodes [myPosition.x][myPosition.y].use = true;
 		nodes [enemyPosition.x][enemyPosition.y].use = true;
 		negamax (nodes [myPosition.x][myPosition.y], nodes [enemyPosition.x][enemyPosition.y], deep, -1e6, 1e6);
 		nodes [enemyPosition.x][enemyPosition.y].use = false;
+		nodes [myPosition.x][myPosition.y].use = false;
 		
 		// trace ("turn: " + turnId + " move: " + nextMove + " << " + nodes [myPosition.x][myPosition.y].connects);
 		return nextMove;
@@ -159,34 +162,31 @@ class AI6 extends Player
 	
 	private function negamax (my:Node, enemy:Node, depth:Int, a:Float, b:Float, path:String = ""):Float
 	{
-		if (depth == 0 || my.connects.length == 0)
-		{
-			var s:Float = evaluate_pos (my, enemy);
-			// trace (path + ", " + my + ", " + enemy + " >> " + s);
-			return s;
-		}
+		if (depth == 0) return evaluate_pos (my, enemy);
 		
-		var bestMove:Node = null;
-		var bestScore:Float = 0;
+		var bestMove:Node = my;
+		var isTerminal:Bool = true;
 		for (move in my.connects)
 		{
 			if (move.use) continue;
+			isTerminal = false;
 			
 			move.use = true;
-			var score = -negamax (enemy, move, depth - 1, -b, -a);//, path + ", " + my);
+			var score = -negamax (enemy, move, depth - 1, -b, -a);
 			move.use = false;
 			
-			if (score > bestScore || bestMove == null)
+			if (score > a)
 			{
-				bestScore = score;
+				a = score;
 				bestMove = move;
-				
-				if (bestScore > a) a = bestScore;
 				if (a >= b) break;
 			}
+			else if (bestMove == my) bestMove = move;
 		}
 		
 		nextMove = bestMove;
+		
+		if (isTerminal) return evaluate_pos (my, enemy);
 		return a;
 	}
 	

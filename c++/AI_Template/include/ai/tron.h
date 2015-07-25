@@ -26,7 +26,6 @@ const int move_permute[4]={1,3,2,4};
 static inline int _min(int a, int b) { return a<b ? a : b; }
 static inline int _max(int a, int b) { return a>b ? a : b; }
 
-
 struct gamestate
 {
 	Position p[2];
@@ -56,17 +55,18 @@ static gamestate curstate;
 static char _killer[DEPTH_MAX*2+2];
 static int _maxitr=0;
 
-bool map_update()
+bool map_update ()
 {
-	if(!M.map)
+	if (!M.map)
 	{
-		M.resize		(MAP_SIZE, MAP_SIZE);
-		dp0.resize		(MAP_SIZE, MAP_SIZE);
-		dp1.resize		(MAP_SIZE, MAP_SIZE);
-		num.resize		(MAP_SIZE, MAP_SIZE);
-		low.resize		(MAP_SIZE, MAP_SIZE);
-		articd.resize	(MAP_SIZE, MAP_SIZE);
+		M.resize		(MAP_SIZE + 2, MAP_SIZE + 2);
+		dp0.resize		(MAP_SIZE + 2, MAP_SIZE + 2);
+		dp1.resize		(MAP_SIZE + 2, MAP_SIZE + 2);
+		num.resize		(MAP_SIZE + 2, MAP_SIZE + 2);
+		low.resize		(MAP_SIZE + 2, MAP_SIZE + 2);
+		articd.resize	(MAP_SIZE + 2, MAP_SIZE + 2);
 	}
+	
 	for(int i=0;i<M.width;i++) { M(i,0) = 1; M(i,M.height-1)=1; }
 	for(int j=0;j<M.height;j++) { M(0,j) = 1; M(M.width-1,j)=1; }
 	return true;
@@ -76,7 +76,7 @@ static inline int color(Position x) { return (x.x ^ x.y)&1; }
 static inline int color(int x, int y) { return (x ^ y)&1; }
 
 struct colorcount
- {
+{
 	int red, black, edges, front;
 	colorcount() {}
 	colorcount(int r, int b, int e, int f): red(r), black(b), edges(e), front(f) {}
@@ -215,20 +215,8 @@ struct Components
 	int connectedvalue(int component) { return cedges[component]; }
 	int connectedvalue(const Position &p) { return cedges[c(p)]; }
 private:
-#if 0
-	int _find_equiv(std::map<int,int> &equiv, int c) {
-		while(true) {
-			std::map<int,int>::iterator e = equiv.find(c);
-			if(e == equiv.end()) break;
-			if(c < e->second)
-				c = e->second;
-			else
-				break;
-		}
-		return c;
-	}
-#endif
-	void _merge(std::vector<int> &equiv, int o, int n) {
+	void _merge(std::vector<int> &equiv, int o, int n)
+	{
 		for(size_t k=0;k<equiv.size();k++)
 			if(equiv[k] == o) equiv[k] = n;
 	}
@@ -516,105 +504,31 @@ static int _evaluate_territory(const gamestate &s, Components &cp, int comp, boo
 	M(s.p[0])=0; M(s.p[1])=0;
 	calc_articulations(&dp0, &dp1, s.p[0]);
 	calc_articulations(&dp1, &dp0, s.p[1]);
-	colorcount ccount0 = max_articulated_space(&dp0, &dp1, s.p[0]),
-						 ccount1 = max_articulated_space(&dp1, &dp0, s.p[1]);
-	int nc0_ = K1*(ccount0.front + num_fillable(ccount0, color(s.p[0]))) + K2*ccount0.edges,
-			nc1_ = K1*(ccount1.front + num_fillable(ccount1, color(s.p[1]))) + K2*ccount1.edges;
+	colorcount ccount0 = max_articulated_space(&dp0, &dp1, s.p[0]);
+	colorcount ccount1 = max_articulated_space(&dp1, &dp0, s.p[1]);
+	int nc0_ = K1*(ccount0.front + num_fillable(ccount0, color(s.p[0]))) + K2*ccount0.edges;
+	int nc1_ = K1*(ccount1.front + num_fillable(ccount1, color(s.p[1]))) + K2*ccount1.edges;
 	M(s.p[0])=1; M(s.p[1])=1;
 	int nodecount = nc0_ - nc1_;
-#if VERBOSE >= 2
-	if(vis) {
-		for(int j=0;j<M.height;j++) {
-			/*
-			for(int i=0;i<M.width;i++) {
-				if(dp0(i,j) == INT_MAX) fprintf(stderr,M(i,j) ? " #" : "	");
-				else fprintf(stderr,"%2d", dp0(i,j));
-			}
-			fprintf(stderr," ");
-			for(int i=0;i<M.width;i++) {
-				if(dp1(i,j) == INT_MAX) fprintf(stderr,M(i,j) ? " #" : "	");
-				else fprintf(stderr,"%2d", dp1(i,j));
-			}
-			fprintf(stderr," ");
-			*/
-			fprintf(stderr, "~~~ ");
-			for(int i=0;i<M.width;i++) {
-				int d = dp1(i,j)-dp0(i,j);
-				if(Position(i,j) == s.p[0])
-					fprintf(stderr,"A");
-				else if(Position(i,j) == s.p[1])
-					fprintf(stderr,"B");
-				else if(articd(i,j))
-					fprintf(stderr,d<0 ? "x" : "o");
-				else if(d == INT_MAX || d == -INT_MAX || M(i,j))
-					fprintf(stderr,"#");
-				else if(d == 0)
-					fprintf(stderr, ".");
-				else {
-					d = d<0 ? 2 : d>0 ? 1 : 0;
-					fprintf(stderr,"%d", d);
-				}
-			}
-			fprintf(stderr,"\n");
-		}
-		fprintf(stderr, "nodecount: %d 0: %d/(r%db%de%dT%d), 1: %d/(r%db%de%dT%d)\n", nodecount,
-						nc0_, ccount0.red, ccount0.black, ccount0.edges, cp.fillablearea(s.p[0]),
-						nc1_, ccount1.red, ccount1.black, ccount1.edges, cp.fillablearea(s.p[1]));
-#if 0
-		for(int j=0;j<M.height;j++) {
-			for(int i=0;i<M.width;i++) {
-				if(num(i,j) == 0) fprintf(stderr,"	%c", M(i,j) ? '#' : '.');
-				else fprintf(stderr,"%3d", num(i,j));
-			}
-			fprintf(stderr," ");
-			for(int i=0;i<M.width;i++) {
-				if(low(i,j) == 0) fprintf(stderr,"	%c", M(i,j) ? '#' : '.');
-				else fprintf(stderr,"%3d", low(i,j));
-			}
-			fprintf(stderr," ");
-			for(int i=0;i<M.width;i++) {
-				int d = num(i,j)-low(i,j);
-				if(num(i,j) == 0)
-					fprintf(stderr, " #");
-				else if(d <= 0)
-					fprintf(stderr," *");
-				else fprintf(stderr," .");
-			}
-			fprintf(stderr,"\n");
-		}
-#endif
-	}
-#endif
 	return nodecount;
 }
 
 static int evaluations=0;
 static int _evaluate_board(gamestate s, int player, bool vis=false)
 {
-	assert(player == 0); // we're always searching an even number of plies
-
-	// remove players from the board when evaluating connected components,
-	// because if a player is separating components he still gets to choose which
-	// one to move into.
+	assert(player == 0);
+	
 	M(s.p[0]) = 0; M(s.p[1]) = 0;
-	Components cp(M); // pre-move components
+	Components cp(M);
 	M(s.p[0]) = 1; M(s.p[1]) = 1;
 
-	if(s.p[0] == s.p[1])
-		return 0; // crash!
+	if(s.p[0] == s.p[1]) return 0;
 
 	evaluations++;
-#if VERBOSE >= 2
-	if(vis) {
-		fprintf(stderr, "evaluating board: \n");
-		M(s.p[0]) = 2; M(s.p[1]) = 3; M.dump();
-		M(s.p[0]) = 1; M(s.p[1]) = 1;
-	}
-#endif
+	
 	int comp;
-	// follow the maximum territory gain strategy until we partition
-	// space or crash
-	if((comp = cp.component(s.p[0])) == cp.component(s.p[1])) {
+	if((comp = cp.component(s.p[0])) == cp.component(s.p[1]))
+	{
 		int v = _evaluate_territory(s, cp, comp, vis);
 		return v;
 	}
@@ -626,34 +540,25 @@ static int _evaluate_board(gamestate s, int player, bool vis=false)
 
 	colorcount ccount0 = max_articulated_space(NULL, NULL, s.p[0]);
 	colorcount ccount1 = max_articulated_space(NULL, NULL, s.p[1]);
-	int ff0 = num_fillable(ccount0, color(s.p[0])),
-			ff1 = num_fillable(ccount1, color(s.p[1]));
+	int ff0 = num_fillable(ccount0, color(s.p[0])); 
+	int ff1 = num_fillable(ccount1, color(s.p[1]));
 	int v = 10000*(ff0-ff1);
-	// if our estimate is really close, try some searching
-	if(v != 0 && abs(v) <= 30000) {
+	
+	if(v != 0 && abs(v) <= 30000)
+	{
 		int _m;
-// #if VERBOSE >= 2
-		// if(vis) fprintf(stderr, "num_fillable %d %d too close to call; searching\n", ff0, ff1);
-// #endif
+		
 		ff0 = _spacefill(_m, cp, s.p[0], 3);
 		ff1 = _spacefill(_m, cp, s.p[1], 3);
 		v = 10000*(ff0-ff1);
 	}
+
 	if(player == 1) v = -v;
-// #if VERBOSE >= 2
-	// if(vis) {
-		// fprintf(stderr, "player=%d connectedarea value: %d (0:%d/%d/%d 1:%d/%d/%d)\n", player, v, ff0,cf0,cc0, ff1,cf1,cc1);
-	// }
-// #endif
+	
 	M(s.p[0])=1; M(s.p[1])=1;
 	return v;
 }
-// }}}
 
-// {{{ alpha-beta iterative deepening search
-
-// do an iterative-deepening search on all moves and see if we can find a move
-// sequence that cuts off our opponent
 static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int itr)
 {
 	// base cases: no more moves?	draws?
@@ -833,15 +738,18 @@ static int next_move()
 	return next_move_spacefill(cp);
 }
 
-int run ()
+int run (int * board, Position myPos, Position enemyPos)
 {
 	memset (_killer, 0, sizeof(_killer));
 	// signal (SIGALRM, _alrm_handler);
 	// setlinebuf (stdout);
 	
-	Position p = curstate.p[0];
-	curstate.p[0] = curstate.p[1];
-	curstate.p[1] = p;
+	if (map_update ())
+	{
+		Position p = curstate.p[0];
+		curstate.p[0] = curstate.p[1];
+		curstate.p[1] = p;
+	}
 	
 	return move_permute[next_move()];
 }

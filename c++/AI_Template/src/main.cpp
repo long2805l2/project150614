@@ -39,7 +39,7 @@ void AI_Update()
 		Position myPos = p_ai->GetMyPosition ();
 		Position enemyPos = p_ai->GetEnemyPosition ();
 
-		Game::GetInstance()->AI_Move (DIRECTION_RIGHT);
+		Game::GetInstance()->AI_Move (run (board, myPos, enemyPos));
 	}
 	else
 	{

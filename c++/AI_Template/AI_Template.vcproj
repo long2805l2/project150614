@@ -511,6 +511,10 @@
 				RelativePath=".\Position.h"
 				>
 			</File>
+			<File
+				RelativePath=".\src\tron.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

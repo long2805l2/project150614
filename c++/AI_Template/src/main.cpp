@@ -1,7 +1,7 @@
 #include <ai/Game.h>
 #include <ai/AI.h>
 #include <time.h>
-#include "tron.cpp"
+#include "tron.h"
 
 // ==================== HOW TO RUN THIS =====================
 // Call:
@@ -18,7 +18,7 @@
 //                                                                                  //
 //////////////////////////////////////////////////////////////////////////////////////
 // - Game board is an array of MAP_SIZExMAP_SIZE blocks                             //
-// - 2 players starts at 2 corners of the game board                                //
+// - 2 players starts at 2 corners of the game board                  //
 // - Each player will take turn to move                                             //
 // - Player can only move left/right/up/down and stay inside the game board         //
 // - The game is over when one of 2 players cannot make a valid move                //

@@ -512,7 +512,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\src\tron.h"
+				RelativePath=".\include\ai\tron.h"
 				>
 			</File>
 		</Filter>

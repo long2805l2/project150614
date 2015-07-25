@@ -1,7 +1,7 @@
 #include <ai/Game.h>
 #include <ai/AI.h>
 #include <time.h>
-#include "tron.h"
+#include <ai/tron.h>
 
 // ==================== HOW TO RUN THIS =====================
 // Call:

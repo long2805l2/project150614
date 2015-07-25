@@ -833,15 +833,15 @@ static int next_move()
 	return next_move_spacefill(cp);
 }
 
-int run (int argc, char **argv)
+int run ()
 {
-	if (argc>1 && atoi(argv[1]))
-	{
-		Position p = curstate.p[0];
-		curstate.p[0] = curstate.p[1];
-		curstate.p[1] = p;
-	}
-
-	// firstmove=false;
-	return move_permute [next_move()];
+	memset (_killer, 0, sizeof(_killer));
+	// signal (SIGALRM, _alrm_handler);
+	// setlinebuf (stdout);
+	
+	Position p = curstate.p[0];
+	curstate.p[0] = curstate.p[1];
+	curstate.p[1] = p;
+	
+	return move_permute[next_move()];
 }

@@ -1,19 +1,10 @@
 #pragma once
 
 #include "defines.h"
+#include "Position.h"
+#include "Map.h"
 #include <cstdio>
 #include <iostream>
-
-/// @struct Position struct.
-/// @brief Describe location of a block.
-struct Position
-{
-	int x;
-	int y;
-	Position() : x(0), y(0) {}
-	Position(int _x, int _y) : x(_x), y(_y) {}
-	Position operator =(Position pos) {x = pos.x; y = pos.y; return *this;}
-};
 
 /// @class AI class.
 /// @brief Main entity of the game.

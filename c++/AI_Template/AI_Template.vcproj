@@ -503,6 +503,14 @@
 				RelativePath=".\include\ai\Game.h"
 				>
 			</File>
+			<File
+				RelativePath=".\include\ai\Map.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Position.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

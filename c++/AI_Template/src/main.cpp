@@ -2,6 +2,7 @@
 #include <ai/AI.h>
 #include <time.h>
 #include <ai/tron.h>
+#include <iostream>
 
 // ==================== HOW TO RUN THIS =====================
 // Call:
@@ -70,6 +71,18 @@ int main(int argc, char* argv[])
 	Game * p_Game = Game::GetInstance();
 	
 	// Create connection
+	
+	// cout << "Arguments:" << argc << endl;
+    // for (int i = 0; i < argc; ++i) cout << argv[i] << endl;
+	
+	argv [0] = "-h";
+	argv [1] = "127.0.0.1";
+	argv [2] = "-p";
+	argv [3] = "3011";
+	argv [4] = "-k";
+	argv [5] = "11";
+	argv [6] = "";
+	argc = 7;
 	if (p_Game->Connect(argc, argv) == -1)
 	{
 		LOG("Failed to connect to server!\n");
@@ -86,5 +99,8 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
     WSACleanup();
 #endif
+	// int a;
+	// cin >> a;
+	// return a;
 	return 0;
 }

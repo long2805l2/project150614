@@ -21,7 +21,7 @@ template <class T> struct Map
 	void clear(void) { memset(map, 0, width*height*sizeof(T)); }
 
 	Map(const Map &m) { abort(); }
-	~Map() { if(map) delete[] map; }
+	// ~Map() { if(map) delete[] map; }
 
 	T& operator()(Position p) { return map[p.x + p.y*width]; }
 	T& operator()(int x, int y) { return map[x + y*width]; }

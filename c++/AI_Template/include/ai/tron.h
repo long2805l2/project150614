@@ -1,10 +1,13 @@
 #include <stdio.h>
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
 #include <limits.h>
 #include <assert.h>
-#include <signal.h>
+#include <csignal>
+// #include <signal.h>
+#include <process.h>
 #include <ai/defines.h>
 #include <ai/Position.h>
 #include <ai/Map.h>
@@ -13,7 +16,7 @@
 #define TIMEOUT_USEC 990000
 #define FIRSTMOVE_USEC 2950000
 #define DEPTH_INITIAL 1
-#define DEPTH_MAX 100
+#define DEPTH_MAX 10
 #define DRAW_PENALTY 0 // -itr // -500
 #define VERBOSE 0
 
@@ -55,7 +58,7 @@ static gamestate curstate;
 static char _killer[DEPTH_MAX*2+2];
 static int _maxitr=0;
 
-bool map_update ()
+bool map_update (int * board, Position myPos, Position enemyPos)
 {
 	if (!M.map)
 	{
@@ -67,8 +70,36 @@ bool map_update ()
 		articd.resize	(MAP_SIZE + 2, MAP_SIZE + 2);
 	}
 	
-	for(int i=0;i<M.width;i++) { M(i,0) = 1; M(i,M.height-1)=1; }
-	for(int j=0;j<M.height;j++) { M(0,j) = 1; M(M.width-1,j)=1; }
+	for (int x = 0; x < MAP_SIZE; x++)
+	{
+		for (int y = 0; y < MAP_SIZE; y++)
+		{
+			int b = board [CONVERT_COORD(x,y)];
+			if (b == BLOCK_EMPTY)
+			{
+				M (x + 1, y + 1) = 0;
+				cout << '.';
+			}
+			else
+			{
+				M (x + 1, y + 1) = 1;
+				cout << '0';
+			}
+		}
+		cout<<endl;
+	}
+	
+	// for(int i=0;i<M.width;i++) { M(i,0) = 1; M(i,M.height-1)=1; }
+	// for(int j=0;j<M.height;j++) { M(0,j) = 1; M(M.width-1,j)=1; }
+	myPos = Position (myPos.x + 1, myPos.y + 1); 
+	enemyPos = Position (enemyPos.x + 1, enemyPos.y + 1); 
+	M (myPos) = 0;
+	M (enemyPos) = 0;
+	curstate.p [0] = myPos;
+	curstate.p [1] = enemyPos;
+	curstate.m [0] = 0;
+	curstate.m [1] = 0;
+	
 	return true;
 }
 
@@ -208,7 +239,10 @@ struct Components
 	int connectedarea(const Position &p) { return red[c(p)]+black[c(p)]; }
 	// number of fillable squares in area when starting on 'startcolor' (assuming starting point is not included)
 	int fillablearea(int component, int startcolor) {
-		return num_fillable(colorcount(red[component], black[component], 0,0), startcolor);
+		return num_fillable(
+		colorcount(red[component],
+		black[component], 0,0),
+		startcolor);
 	}
 	// number of fillable squares starting from p (not including p)
 	int fillablearea(const Position &p) { return fillablearea(c(p), color(p)); }
@@ -265,7 +299,7 @@ static void dijkstra(Map<int> &d, const Position &s, Components &cp, int compone
 		while(!Q[activeq].empty())
 		{
 			Position u = Q[activeq].back();
-			assert(d(u) == radius);
+			// assert(d(u) == radius);
 			Q[activeq].pop_back();
 			for(int m=0;m<4;m++) {
 				Position v = u.next(m);
@@ -275,7 +309,7 @@ static void dijkstra(Map<int> &d, const Position &s, Components &cp, int compone
 					Q[activeq^1].push_back(v);
 					d(v) = 1+d(u);
 				} else {
-					assert(1+d(u) >= dist);
+					// assert(1+d(u) >= dist);
 				}
 			}
 		}
@@ -283,8 +317,8 @@ static void dijkstra(Map<int> &d, const Position &s, Components &cp, int compone
 		radius++;
 	} while(!Q[activeq].empty());
 
-	assert(Q[0].empty());
-	assert(Q[1].empty());
+	// assert(Q[0].empty());
+	// assert(Q[1].empty());
 }
 
 static int floodfill(Components &ca, Position s, bool fixup=true)
@@ -353,9 +387,10 @@ static int next_move_spacefill(Components &ca)
 	int itr;
 	int area = ca.fillablearea(curstate.p[0]);
 	int bestv = 0, bestm = 1;
-
+	
 	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !_timed_out; itr++)
 	{
+		cout<<"next_move_spacefill: "<<itr<<endl;
 		int m;
 		_maxitr = itr;
 		int v = _spacefill(m, ca, curstate.p[0], itr);
@@ -516,7 +551,7 @@ static int _evaluate_territory(const gamestate &s, Components &cp, int comp, boo
 static int evaluations=0;
 static int _evaluate_board(gamestate s, int player, bool vis=false)
 {
-	assert(player == 0);
+	// assert(player == 0);
 	
 	M(s.p[0]) = 0; M(s.p[1]) = 0;
 	Components cp(M);
@@ -576,63 +611,20 @@ static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int it
 	if(dp1 == 0) {
 		// choose any move
 		int m;
-		for(m=0;m<4;m++) if(!M(s.p[player].next(m))) break;
+		for (m=0;m<4;m++) if(!M(s.p[player].next(m))) break;
 		*moves = m;
 		return INT_MAX;
 	}
 
-	if(_timed_out) {
-#if VERBOSE >= 1
-		fprintf(stderr, "timeout; a=%d b=%d itr=%d\n", a,b,itr);
-#endif
+	if (_timed_out) {
 		return a;
 	}
 
 	// last iteration?
 	if(itr == 0) {
-#if VERBOSE >= 3
-		int v = _evaluate_board(s, player, true);
-		fprintf(stderr, "_alphabeta(itr=%d [%d,%d,%d]|[%d,%d,%d] p=%d a=%d b=%d) -> %d\n",
-						itr, s.p[0].x, s.p[0].y, s.m[0],
-						s.p[1].x, s.p[1].y, s.m[1], player, a,b,v);
-#else
 		int v = _evaluate_board(s, player);
-#endif
 		return v;
 	}
-#if VERBOSE >= 3
-	fprintf(stderr, "_alphabeta(itr=%d [%d,%d,%d]|[%d,%d,%d] p=%d a=%d b=%d)\n",
-					itr, s.p[0].x, s.p[0].y, s.m[0],
-					s.p[1].x, s.p[1].y, s.m[1], player, a,b);
-#endif
-
-#if 0
-	// "singularity enhancement": if we have only one valid move, then just
-	// deepen the search assuming that move without using up an iteration count
-	if(dp0 == 1) {
-		// choose only move
-		int m;
-		for(m=0;m<4;m++) if(!M(s.p[player].next(m))) break;
-		gamestate r = s;
-		r.m[player] = m;
-		if(player == 1) {
-			r.p[0] = s.p[0].next(r.m[0]);
-			r.p[1] = s.p[1].next(r.m[1]);
-			M(r.p[0]) = 1;
-			M(r.p[1]) = 1;
-		}
-		*moves = m;
-		int a_ = -_alphabeta(moves+1, r, player^1, -b, -a, itr + (player == 0 ? 1 : -1));
-		// undo game state update
-		if(player == 1) {
-			M(r.p[0]) = 0;
-			M(r.p[1]) = 0;
-			r.p[0] = s.p[0];
-			r.p[1] = s.p[1];
-		}
-		return a_;
-	}
-#endif
 
 	// periodically check timeout.	if we do time out, give up, we can't do any
 	// more work; whatever we found so far will have to do
@@ -669,11 +661,9 @@ static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int it
 			r.p[1] = s.p[1];
 		}
 
-		if(_timed_out) // a_ is garbage if we timed out
-			return -INT_MAX;
+		if(_timed_out) return -INT_MAX;
 
-		if(a >= b) // beta cut-off
-			break;
+		if(a >= b) break;
 	}
 	memcpy(moves, bestmoves, itr);
 	return a;
@@ -686,69 +676,61 @@ static int next_move_alphabeta ()
 	evaluations=0;
 	char moves[DEPTH_MAX*2+2];
 	memset(moves, 0, sizeof(moves));
+
 	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !_timed_out;itr++)
 	{
 		_maxitr = itr*2;
 		int v = _alphabeta(moves, curstate, 0, -INT_MAX, INT_MAX, itr*2);
-#if VERBOSE >= 1
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		fprintf(stderr, "%d.%06d: v=%d m=[", (int) tv.tv_sec, (int) tv.tv_usec, v);
-		for(int i=0;i<(itr < 10 ? itr*2 : 20);i++) fprintf(stderr, "%d", move_permute[(int)moves[i]]);
-		fprintf(stderr, "] @depth %d _ab_runs=%d\n", itr*2, _ab_runs);
-#endif
 
-		if(v == INT_MAX)
-			return moves[0];
+		if(v == INT_MAX) return moves[0];
 
-		if(v == -INT_MAX)
-			break;
+		if(v == -INT_MAX) break;
 		
 		lastv = v;
 		lastm = moves[0];
 		memcpy(_killer, moves, itr*2);
 	}
-#if VERBOSE >= 1
-	long e = elapsed_time();
-	float rate = (float)evaluations*1000000.0/(float)e;
-	fprintf(stderr, "%d evals in %ld us; %0.1f evals/sec; lastv=%d move=%d\n", evaluations, e, rate, lastv, move_permute[lastm]);
-	if(e > TIMEOUT_USEC*11/10) {
-		fprintf(stderr, "10%% timeout violation: %ld us\n", e);
-	}
-#endif
+	
 	memmove(_killer, _killer+2, sizeof(_killer)-2); // shift our best-move tree forward to accelerate next move's search
 	return lastm;
 }
 
 static int next_move()
 {
+	cout<<"next move"<<endl;
 	Components cp (M);
-	
-#if VERBOSE >= 2
-	cp.dump();
-	_evaluate_board(curstate, 0, true);
-#endif
 	
 	M(curstate.p[0]) = 1;
 	M(curstate.p[1]) = 1;
 	
 	if (cp.component (curstate.p[0]) == cp.component (curstate.p[1]))
+	{
+		cout<<"use next_move_alphabeta"<<endl;
 		return next_move_alphabeta ();
-
+	}
+	
+	cout<<"use next_move_spacefill"<<endl;
 	return next_move_spacefill(cp);
+}
+
+void  silly( void *arg )
+{
+    cout <<"The silly() function was passed"<<endl;
 }
 
 int run (int * board, Position myPos, Position enemyPos)
 {
+	_beginthread( silly, 0, (void*)12 );
+	
 	memset (_killer, 0, sizeof(_killer));
-	// signal (SIGALRM, _alrm_handler);
+	// signal (SIGINT, _alrm_handler);
 	// setlinebuf (stdout);
 	
-	if (map_update ())
+	if (map_update (board, myPos, enemyPos))
 	{
-		Position p = curstate.p[0];
-		curstate.p[0] = curstate.p[1];
-		curstate.p[1] = p;
+		// Position p = curstate.p[0];
+		// curstate.p[0] = curstate.p[1];
+		// curstate.p[1] = p;
 	}
 	
 	return move_permute[next_move()];

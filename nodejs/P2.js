@@ -8,6 +8,8 @@
 // ===========================================================
 
 // Get the host and port from argurment
+var VERSION = 1;
+
 var host = "127.0.0.1";
 var port = 3011;
 var key = 0;
@@ -102,6 +104,9 @@ function OnUpdatePacket(data, offset) {
 		ConvertVariable();
 		MyTurn();
 	}
+	else {
+		// Do something while waiting for your opponent
+	}
 }
 
 // Player need to give a command here
@@ -171,6 +176,7 @@ var socket = ws.connect ("ws://" + host + ":" + port, [], function () {
 	var data = "";
 	data += String.fromCharCode(COMMAND_SEND_KEY);
 	data += String.fromCharCode(key);
+	data += String.fromCharCode(VERSION);
 	Send (data);
 });
 socket.on("text", function (data) {
@@ -263,181 +269,145 @@ function Send(data) {
 // That's pretty much about it. Now, let's start coding.
 // ===========================================================
 
-
-var mapHistory = null;
-function buildMapHistory()
+function MyTurn ()
 {
-	mapHistory = new Array();
-	for (i=0; i<MAP_SIZE*MAP_SIZE; i++)
-	{
-		mapHistory[i] = 0;
-	}
+	var dir = tron ();
+	
+	// console.log ("MyTurn: " + dir);
+	Command (dir);
 }
 
-function buildGraph()
+var nextMove;
+var allValidMoves;
+
+function tron ()
 {
-	var i = 0;
-	var j = 0;
+	if (allValidMoves == null) createVaildMoves ();
 	
-	var idx = 0;
-	var idx2 = 0;
-	var graphList = new Array();	
-	for (i=0; i<MAP_SIZE*MAP_SIZE; i++)
+	nextMove = null;
+	var score = negamax (myPosition, enemyPosition, 16, -1000, 1000);
+	// console.log ("nextMove: " + nextMove.x + ", " + nextMove.y);
+	
+	var dir = -1;
+	if (myPosition.x - 1 == nextMove.x)			dir = DIRECTION_LEFT;
+	else if (myPosition.x + 1 == nextMove.x)	dir = DIRECTION_RIGHT;
+	else if (myPosition.y - 1 == nextMove.y)	dir = DIRECTION_UP;
+	else if (myPosition.y + 1 == nextMove.y)	dir = DIRECTION_DOWN;
+	
+	return dir;
+}
+
+function evaluate_pos (my, enemy)
+{
+	var data = [];
+	for (var x = 0; x < MAP_SIZE; x++)
 	{
-		graphList[i] = new Array();
+		data [x] = [];
+		for (var y = 0; y < MAP_SIZE; y++)
+			data [x][y] = (board [x][y] == BLOCK_EMPTY) ? 0 : -1;
 	}
 	
-	for (i=0; i<MAP_SIZE; i++)
+	var myValue = 1;
+	var myZone = [my];
+	
+	var enemyValue = 1;
+	var enemyZone = [enemy];
+	
+	var current = null;
+	var temp = null;
+	var move = null;
+	var moves = null;
+	var moveId = -1;
+	while (myZone.length != 0 || enemyZone.length != 0)
 	{
-		for (j=0; j<MAP_SIZE; j++)
+		temp = [];
+		while (myZone.length > 0)
 		{
-			idx = ConvertCoord(i, j);
-			if(board[i][j] == BLOCK_EMPTY)
+			current = myZone.pop ();
+			moves = allValidMoves [current.x][current.y];
+			for (moveId = 0; moveId < moves.length; moveId ++)
 			{
-				if (i > 0 && board[i-1][j] == BLOCK_EMPTY)
+				move = moves [moveId];
+				if (data [move.x][move.y] == 0)
 				{
-					idx2 = ConvertCoord(i-1, j);
-					graphList[idx].push(idx2);
-				}
-				
-				if (i < MAP_SIZE - 1 && board[i+1][j] == BLOCK_EMPTY)
-				{
-					idx2 = ConvertCoord(i+1, j);
-					graphList[idx].push(idx2);
-				}
-				
-				if (j < MAP_SIZE - 1 && board[i][j + 1] == BLOCK_EMPTY)
-				{
-					idx2 = ConvertCoord(i, j + 1);
-					graphList[idx].push(idx2);
-				}
-				
-				if (j > 0 && board[i][j - 1] == BLOCK_EMPTY)
-				{
-					idx2 = ConvertCoord(i, j - 1);
-					graphList[idx].push(idx2);
+					data [move.x][move.y] = -1;
+					temp.push (move);
+					myValue ++;
 				}
 			}
 		}
-	}	
+		myZone = temp;
 
-	return graphList;
-}
-
-
-function calcBestZone(graphArray, index_pos)
-{
-	var cloneArrayGraph = graphArray.slice(0);
-	var cloneArrayHistory = mapHistory.slice(0);
-	var i = 0; var j = 0; var zone = 0; var bestZone = -1;
-	var len = graphArray[index_pos].length;
-	var len2 = 0; var idx = 0;
-	cloneArrayHistory[index_pos] = 1;
-	for(i = 0; i < len; i++)
-	{
-		idx = graphArray[index_pos][i];			
-		len2 = graphArray[idx].length;
-		zone = 1;
-		for(j = 0; j < len2; j++)
+		temp = [];
+		while (enemyZone.length > 0)
 		{
-			
-			if(cloneArrayHistory[idx] == 0)
+			current = enemyZone.pop ();
+			moves = allValidMoves [current.x][current.y];
+			for (moveId = 0; moveId < moves.length; moveId ++)
 			{
-				cloneArrayHistory[idx] = 1;
-				zone = calcZone(cloneArrayGraph, cloneArrayHistory, idx);
-				if(bestZone < zone)
-					bestZone = zone;
-				// console.log("Zone " + idx + " for idx:" + index_pos + " => " + zone);
+				move = moves [moveId];
+				if (data [move.x][move.y] == 0)
+				{
+					data [move.x][move.y] = -1;
+					temp.push (move);
+					enemyValue ++;
+				}
 			}
 		}
-	}	
+		enemyZone = temp;
+	}
 	
-	return bestZone;
+	return myValue - enemyValue;
 }
 
-function calcZone(graphMap, historyMap, from_pos)
+function negamax (my, enemy, depth, a, b)
 {
-	var zone = 1;
-	var i = 0; var j = 0; var idx = -1;
-	var len = graphMap[from_pos].length;
-	
-	for(i = 0; i < len; i++)
+	// console.log ("negamax [" + depth + "]: " + my.x + ", " + my.y + " vs " + enemy.x + ", " + enemy.y);
+	if (depth == 0)
 	{
-		idx = graphMap[from_pos][i];
-		if(historyMap[idx] == 0)
-		{
-			zone++;
-			historyMap[idx] = 1;
-			zone += calcZone(graphMap, historyMap, idx);
-		}
+		nextMove = my;
+		return evaluate_pos (my, enemy);
+	}
+	
+	var moves = allValidMoves [my.x][my.y];
+	var bestMove = my;
+	
+	for (var moveId = 0; moveId < moves.length; moveId ++)
+	{
+		var move = moves [moveId];
+		if (board [move.x][move.y] != BLOCK_EMPTY) continue;
 		
+		board [move.x][move.y] = BLOCK_OBSTACLE;
+		var score = -negamax (enemy, move, depth - 1, -b, -a);
+		board [move.x][move.y] = BLOCK_EMPTY;
+		
+		if (score > a)
+		{
+			a = score;
+			bestMove = move;
+			// if (a >= b) break;
+		}
+		else if (bestMove == my) bestMove = move;
 	}
 	
-	return zone;
+	nextMove = bestMove;
+	return a;
 }
 
-var numMove = 0;
-var lastMove = -1;
-function MyTurn() {
-	
-	if(mapHistory == null)
-		buildMapHistory();	
-	// This is my testing algorithm, which will pick a random valid move, then move.
-	// This array contain which move can I make.
-	var suitableDir = new Array();
-	var suitableDirIDX = new Array();	
-	// I check the terrain around to find them
-	var x = myPosition.x;
-	var y = myPosition.y;
-	
-	// With each movable square, I pust it to the array	
-	if (lastMove != DIRECTION_RIGHT && x > 0 && board[x-1][y] == BLOCK_EMPTY) {
-		suitableDir.push (DIRECTION_LEFT);
-		suitableDirIDX.push(ConvertCoord(x-1, y));
-	}
-	if (lastMove != DIRECTION_LEFT && x < MAP_SIZE - 1 &&  board[x+1][y] == BLOCK_EMPTY) {
-		suitableDir.push (DIRECTION_RIGHT);
-		suitableDirIDX.push(ConvertCoord(x+1, y));
-	}
-	if (lastMove != DIRECTION_DOWN && y > 0 && board[x][y-1] == BLOCK_EMPTY) {
-		suitableDir.push (DIRECTION_UP);
-		suitableDirIDX.push(ConvertCoord(x, y - 1));
-	}
-	if (lastMove != DIRECTION_UP && y < MAP_SIZE - 1 &&  board[x][y+1] == BLOCK_EMPTY) {
-		suitableDir.push (DIRECTION_DOWN);
-		suitableDirIDX.push(ConvertCoord(x, y + 1));
-	}
-	
-	if(suitableDir.length <= 0)
-		lastMove = DIRECTION_LEFT;	
-	else if(suitableDir.length == 1)
-		lastMove = suitableDir[0];
-	else
+function createVaildMoves ()
+{
+	allValidMoves = [];
+	for (var x = 0; x < MAP_SIZE; x++)
 	{
-		
-		if(numMove < MAP_SIZE)
+		allValidMoves [x] = [];
+		for (var y = 0; y < MAP_SIZE; y++)
 		{
-			var selection = (Math.random() * suitableDir.length) >> 0;
-			lastMove = suitableDir[selection];			
-		}
-		else
-		{
-			graph = buildGraph();
-			var len = suitableDirIDX.length;
-			var bestDirZone =0, currZOne = 0;
-			for(var i = 0; i < len; i++)
-			{
-				currZOne = calcBestZone(graph, suitableDirIDX[i]);
-				if(currZOne >= bestDirZone)
-				{	
-					lastMove = suitableDir[i];
-					bestDirZone = currZOne;
-				}
-			}
+			allValidMoves [x][y] = [];
+			if (board [x][y] == BLOCK_OBSTACLE) continue;
+			if (x > 0 && board [x - 1][y] == BLOCK_EMPTY) 				allValidMoves [x][y].push (new Position (x - 1, y));
+			if (y > 0 && board [x][y - 1] == BLOCK_EMPTY) 				allValidMoves [x][y].push (new Position (x, y - 1));
+			if (x < MAP_SIZE - 1 && board [x + 1][y] == BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x + 1, y));
+			if (y < MAP_SIZE - 1 && board [x][y + 1] == BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x, y + 1));
 		}
 	}
-	// Call "Command". Don't ever forget this. And make it quick, you only have 3 sec to call this.		
-	// console.log("suitableDir:" + suitableDir);
-	numMove++;
-	Command(lastMove);
 }

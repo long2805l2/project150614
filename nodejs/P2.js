@@ -269,145 +269,32 @@ function Send(data) {
 // That's pretty much about it. Now, let's start coding.
 // ===========================================================
 
-function MyTurn ()
-{
-	var dir = tron ();
+function MyTurn() {
+	// This is my testing algorithm, which will pick a random valid move, then move.
+	// This array contain which move can I make.
+	var suitableDir = new Array();
+	// I check the terrain around to find them
+	var x = myPosition.x;
+	var y = myPosition.y;
 	
-	// console.log ("MyTurn: " + dir);
-	Command (dir);
-}
-
-var nextMove;
-var allValidMoves;
-
-function tron ()
-{
-	if (allValidMoves == null) createVaildMoves ();
-	
-	nextMove = null;
-	var score = negamax (myPosition, enemyPosition, 16, -1000, 1000);
-	// console.log ("nextMove: " + nextMove.x + ", " + nextMove.y);
-	
-	var dir = -1;
-	if (myPosition.x - 1 == nextMove.x)			dir = DIRECTION_LEFT;
-	else if (myPosition.x + 1 == nextMove.x)	dir = DIRECTION_RIGHT;
-	else if (myPosition.y - 1 == nextMove.y)	dir = DIRECTION_UP;
-	else if (myPosition.y + 1 == nextMove.y)	dir = DIRECTION_DOWN;
-	
-	return dir;
-}
-
-function evaluate_pos (my, enemy)
-{
-	var data = [];
-	for (var x = 0; x < MAP_SIZE; x++)
-	{
-		data [x] = [];
-		for (var y = 0; y < MAP_SIZE; y++)
-			data [x][y] = (board [x][y] == BLOCK_EMPTY) ? 0 : -1;
+	// With each movable square, I pust it to the array
+	if (x > 0 && board[x-1][y] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_LEFT);
+	}
+	if (x < MAP_SIZE - 1 &&  board[x+1][y] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_RIGHT);
+	}
+	if (y > 0 && board[x][y-1] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_UP);
+	}
+	if (y < MAP_SIZE - 1 &&  board[x][y+1] == BLOCK_EMPTY) {
+		suitableDir.push (DIRECTION_DOWN);
 	}
 	
-	var myValue = 1;
-	var myZone = [my];
-	
-	var enemyValue = 1;
-	var enemyZone = [enemy];
-	
-	var current = null;
-	var temp = null;
-	var move = null;
-	var moves = null;
-	var moveId = -1;
-	while (myZone.length != 0 || enemyZone.length != 0)
-	{
-		temp = [];
-		while (myZone.length > 0)
-		{
-			current = myZone.pop ();
-			moves = allValidMoves [current.x][current.y];
-			for (moveId = 0; moveId < moves.length; moveId ++)
-			{
-				move = moves [moveId];
-				if (data [move.x][move.y] == 0)
-				{
-					data [move.x][move.y] = -1;
-					temp.push (move);
-					myValue ++;
-				}
-			}
-		}
-		myZone = temp;
-
-		temp = [];
-		while (enemyZone.length > 0)
-		{
-			current = enemyZone.pop ();
-			moves = allValidMoves [current.x][current.y];
-			for (moveId = 0; moveId < moves.length; moveId ++)
-			{
-				move = moves [moveId];
-				if (data [move.x][move.y] == 0)
-				{
-					data [move.x][move.y] = -1;
-					temp.push (move);
-					enemyValue ++;
-				}
-			}
-		}
-		enemyZone = temp;
-	}
-	
-	return myValue - enemyValue;
-}
-
-function negamax (my, enemy, depth, a, b)
-{
-	// console.log ("negamax [" + depth + "]: " + my.x + ", " + my.y + " vs " + enemy.x + ", " + enemy.y);
-	if (depth == 0)
-	{
-		nextMove = my;
-		return evaluate_pos (my, enemy);
-	}
-	
-	var moves = allValidMoves [my.x][my.y];
-	var bestMove = my;
-	
-	for (var moveId = 0; moveId < moves.length; moveId ++)
-	{
-		var move = moves [moveId];
-		if (board [move.x][move.y] != BLOCK_EMPTY) continue;
+	// Choose one of the suitable direction
+	var selection = (Math.random() * suitableDir.length) >> 0;
+	var dir = suitableDir[selection];
 		
-		board [move.x][move.y] = BLOCK_OBSTACLE;
-		var score = -negamax (enemy, move, depth - 1, -b, -a);
-		board [move.x][move.y] = BLOCK_EMPTY;
-		
-		if (score > a)
-		{
-			a = score;
-			bestMove = move;
-			// if (a >= b) break;
-		}
-		else if (bestMove == my) bestMove = move;
-	}
-	
-	nextMove = bestMove;
-	return a;
-}
-
-function createVaildMoves ()
-{
-	allValidMoves = [];
-	for (var x = 0; x < MAP_SIZE; x++)
-	{
-		allValidMoves [x] = [];
-		for (var y = 0; y < MAP_SIZE; y++)
-		{
-			allValidMoves [x][y] = [];
-			if (board [x][y] == BLOCK_OBSTACLE) continue;
-			if (x > 0 && board [x - 1][y] == BLOCK_EMPTY) 				allValidMoves [x][y].push (new Position (x - 1, y));
-			if (y > 0 && board [x][y - 1] == BLOCK_EMPTY) 				allValidMoves [x][y].push (new Position (x, y - 1));
-			if (x < MAP_SIZE - 1 && board [x + 1][y] == BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x + 1, y));
-			if (y < MAP_SIZE - 1 && board [x][y + 1] == BLOCK_EMPTY)	allValidMoves [x][y].push (new Position (x, y + 1));
-		}
-	}
+	// Call "Command". Don't ever forget this. And make it quick, you only have 3 sec to call this.
+	Command(dir);
 }

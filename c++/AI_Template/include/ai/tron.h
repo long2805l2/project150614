@@ -16,16 +16,21 @@
 #define TIMEOUT_USEC 990000
 #define FIRSTMOVE_USEC 2950000
 #define DEPTH_INITIAL 1
-#define DEPTH_MAX 10
+#define DEPTH_MAX 100
 #define DRAW_PENALTY 0 // -itr // -500
-#define VERBOSE 0
+#define VERBOSE 2
 
 #define K1 55
 #define K2 194
 #define K3 3
 
-const int move_permute[4]={1,3,2,4};
-
+const int move_permute[4] = {DIRECTION_UP, DIRECTION_RIGHT, DIRECTION_DOWN, DIRECTION_LEFT};
+// so instead it's  1
+//                 4 3
+//                  2
+// const char position::dx[4]={ 0, 0, 1,-1};
+// const char position::dy[4]={-1, 1, 0, 0};
+// const int move_permute[4]={1,3,2,4};
 static inline int _min(int a, int b) { return a<b ? a : b; }
 static inline int _max(int a, int b) { return a>b ? a : b; }
 
@@ -78,19 +83,21 @@ bool map_update (int * board, Position myPos, Position enemyPos)
 			if (b == BLOCK_EMPTY)
 			{
 				M (x + 1, y + 1) = 0;
-				cout << '.';
+				// cout << '.';
 			}
 			else
 			{
 				M (x + 1, y + 1) = 1;
-				cout << '0';
+				// cout << '0';
 			}
 		}
-		cout<<endl;
+		// cout<<endl;
 	}
 	
-	// for(int i=0;i<M.width;i++) { M(i,0) = 1; M(i,M.height-1)=1; }
-	// for(int j=0;j<M.height;j++) { M(0,j) = 1; M(M.width-1,j)=1; }
+	for(int i=0;i<M.width;i++) { M(i,0) = 1; M(i,M.height-1)=1; }
+	
+	for(int j=0;j<M.height;j++) { M(0,j) = 1; M(M.width-1,j)=1; }
+	
 	myPos = Position (myPos.x + 1, myPos.y + 1); 
 	enemyPos = Position (enemyPos.x + 1, enemyPos.y + 1); 
 	M (myPos) = 0;
@@ -116,7 +123,8 @@ struct colorcount
 
 static colorcount operator+(const colorcount &a, const colorcount &b) { return colorcount(a.red+b.red, a.black+b.black, a.edges+b.edges, a.front+b.front); }
 
-int num_fillable(const colorcount &c, int startcolor) {
+int num_fillable(const colorcount &c, int startcolor)
+{
 	if(startcolor)
 		return 2*_min(c.red-1, c.black) + (c.black >= c.red ? 1 : 0);
 	
@@ -232,6 +240,14 @@ struct Components
 		}
 		cedges[c(s)] += 2*degree(s);
 		if(color(s)) red[c(s)] ++; else black[c(s)] ++;
+	}
+
+	void dump() {
+		for(size_t i=0;i<red.size();i++) {
+			if(red[i])
+				fprintf(stderr, "area %d: %d red %d black nodes, %d edges\n", (int)i, red[i], black[i], cedges[i]);
+		}
+		c.dump();
 	}
 	
 	int component(const Position &p) { return c(p); }
@@ -391,7 +407,7 @@ static int next_move_spacefill(Components &ca)
 	
 	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !timed_out (); itr++)
 	{
-		cout<<"next_move_spacefill: "<<itr<<endl;
+		// cout<<"next_move_spacefill: "<<itr<<endl;
 		int m;
 		_maxitr = itr;
 		int v = _spacefill(m, ca, curstate.p[0], itr);
@@ -546,6 +562,34 @@ static int _evaluate_territory(const gamestate &s, Components &cp, int comp, boo
 	int nc1_ = K1*(ccount1.front + num_fillable(ccount1, color(s.p[1]))) + K2*ccount1.edges;
 	M(s.p[0])=1; M(s.p[1])=1;
 	int nodecount = nc0_ - nc1_;
+#if VERBOSE >= 2
+  if(vis) {
+    for(int j=0;j<M.height;j++) {
+      fprintf(stderr, "~~~ ");
+      for(int i=0;i<M.width;i++) {
+        int d = dp1(i,j)-dp0(i,j);
+        if(Position(i,j) == s.p[0])
+          fprintf(stderr,"A");
+        else if(Position(i,j) == s.p[1])
+          fprintf(stderr,"B");
+        else if(articd(i,j))
+          fprintf(stderr,d<0 ? "x" : "o");
+        else if(d == INT_MAX || d == -INT_MAX || M(i,j))
+          fprintf(stderr,"#");
+        else if(d == 0)
+          fprintf(stderr, ".");
+        else {
+          d = d<0 ? 2 : d>0 ? 1 : 0;
+          fprintf(stderr,"%d", d);
+        }
+      }
+      fprintf(stderr,"\n");
+    }
+    fprintf(stderr, "nodecount: %d 0: %d/(r%db%de%dT%d), 1: %d/(r%db%de%dT%d)\n", nodecount,
+            nc0_, ccount0.red, ccount0.black, ccount0.edges, cp.fillablearea(s.p[0]),
+            nc1_, ccount1.red, ccount1.black, ccount1.edges, cp.fillablearea(s.p[1]));
+  }
+#endif
 	return nodecount;
 }
 
@@ -561,7 +605,13 @@ static int _evaluate_board(gamestate s, int player, bool vis=false)
 	if(s.p[0] == s.p[1]) return 0;
 
 	evaluations++;
-	
+#if VERBOSE >= 2
+  if(vis) {
+    fprintf(stderr, "evaluating board: \n");
+    M(s.p[0]) = 2; M(s.p[1]) = 3; M.dump();
+    M(s.p[0]) = 1; M(s.p[1]) = 1;
+  }
+#endif
 	int comp;
 	if((comp = cp.component(s.p[0])) == cp.component(s.p[1]))
 	{
@@ -618,14 +668,29 @@ static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int it
 	}
 
 	if (timed_out ()) {
+#if VERBOSE >= 1
+    fprintf(stderr, "timeout; a=%d b=%d itr=%d\n", a,b,itr);
+#endif
 		return a;
 	}
 
 	// last iteration?
 	if(itr == 0) {
-		int v = _evaluate_board(s, player);
+#if VERBOSE >= 3
+    int v = _evaluate_board(s, player, true);
+    fprintf(stderr, "_alphabeta(itr=%d [%d,%d,%d]|[%d,%d,%d] p=%d a=%d b=%d) -> %d\n",
+            itr, s.p[0].x, s.p[0].y, s.m[0],
+            s.p[1].x, s.p[1].y, s.m[1], player, a,b,v);
+#else
+    int v = _evaluate_board(s, player);
+#endif
 		return v;
 	}
+#if VERBOSE >= 3
+  fprintf(stderr, "_alphabeta(itr=%d [%d,%d,%d]|[%d,%d,%d] p=%d a=%d b=%d)\n",
+          itr, s.p[0].x, s.p[0].y, s.m[0],
+          s.p[1].x, s.p[1].y, s.m[1], player, a,b);
+#endif
 
 	// periodically check timeout.	if we do time out, give up, we can't do any
 	// more work; whatever we found so far will have to do
@@ -678,15 +743,21 @@ static int next_move_alphabeta ()
 	char moves[DEPTH_MAX*2+2];
 	memset(moves, 0, sizeof(moves));
 
-	cout<<"alphabeta run"<<endl;
+	// cout<<"alphabeta run"<<endl;
 	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX;itr++)
 	{
 		long cTime = getTime();
-		cout<<"cTime: "<<cTime<<" - "<<_timer<<" = "<<(cTime - _timer)<<endl;
+		// cout<<"cTime: "<<cTime<<" - "<<_timer<<" = "<<(cTime - _timer)<<endl;
 		
 		_maxitr = itr*2;
 		int v = _alphabeta(moves, curstate, 0, -INT_MAX, INT_MAX, itr*2);
-
+#if VERBOSE >= 1
+    // struct timeval tv;
+    // gettimeofday(&tv, NULL);
+    // fprintf(stderr, "%d.%06d: v=%d m=[", (int) tv.tv_sec, (int) tv.tv_usec, v);
+    for(int i=0;i<(itr < 10 ? itr*2 : 20);i++) fprintf(stderr, "%d", move_permute[(int)moves[i]]);
+    fprintf(stderr, "] @depth %d _ab_runs=%d\n", itr*2, _ab_runs);
+#endif
 		if(v == INT_MAX) return moves[0];
 
 		if(v == -INT_MAX) break;
@@ -695,38 +766,41 @@ static int next_move_alphabeta ()
 		lastm = moves[0];
 		memcpy(_killer, moves, itr*2);
 	}
-	
+#if VERBOSE >= 1
+  long e = elapsed_time();
+  float rate = (float)evaluations*1000000.0/(float)e;
+  fprintf(stderr, "%d evals in %ld us; %0.1f evals/sec; lastv=%d move=%d\n", evaluations, e, rate, lastv, move_permute[lastm]);
+  if(e > TIMEOUT_USEC*11/10) {
+    fprintf(stderr, "10%% timeout violation: %ld us\n", e);
+  }
+#endif
 	memmove(_killer, _killer+2, sizeof(_killer)-2); // shift our best-move tree forward to accelerate next move's search
 	return lastm;
 }
 
 static int next_move()
 {
-	cout<<"next move"<<endl;
+	// cout<<"next move"<<endl;
 	Components cp (M);
-	
+#if VERBOSE >= 2
+  cp.dump();
+  _evaluate_board(curstate, 0, true);
+#endif
 	M(curstate.p[0]) = 1;
 	M(curstate.p[1]) = 1;
 	
 	if (cp.component (curstate.p[0]) == cp.component (curstate.p[1]))
 	{
-		cout<<"use next_move_alphabeta"<<endl;
+		// cout<<"use next_move_alphabeta"<<endl;
 		return next_move_alphabeta ();
 	}
 	
-	cout<<"use next_move_spacefill"<<endl;
+	// cout<<"use next_move_spacefill"<<endl;
 	return next_move_spacefill(cp);
-}
-
-void  silly( void *arg )
-{
-    cout <<"The silly() function was passed"<<endl;
 }
 
 int run (int * board, Position myPos, Position enemyPos)
 {
-	_beginthread( silly, 0, (void*)12 );
-	
 	memset (_killer, 0, sizeof(_killer));
 	// signal (SIGINT, _alrm_handler);
 	// setlinebuf (stdout);
@@ -739,5 +813,8 @@ int run (int * board, Position myPos, Position enemyPos)
 		// curstate.p[1] = p;
 	}
 	
-	return move_permute[next_move()];
+	int nextMove = next_move();
+	cout<<"next move: "<<nextMove<<" >> "<<move_permute [nextMove]<<endl;
+
+	return move_permute [nextMove];
 }

@@ -54,7 +54,8 @@ void AI_Update()
 
 int main(int argc, char* argv[])
 {
-	system ("call E:\\Workspace\\project150614\\trunk\\nodejs\\vsPC_debug.bat");
+	// system ("call E:\\Workspace\\project150614\\trunk\\nodejs\\vsPC_debug.bat");
+	// for (int w = 0; w < 2000000; w++);
 
 	srand(clock());
 	
@@ -77,14 +78,14 @@ int main(int argc, char* argv[])
 	// cout << "Arguments:" << argc << endl;
     // for (int i = 0; i < argc; ++i) cout << argv[i] << endl;
 	
-	argv [0] = "-h";
-	argv [1] = "127.0.0.1";
-	argv [2] = "-p";
-	argv [3] = "3011";
-	argv [4] = "-k";
-	argv [5] = "11";
-	argv [6] = "";
-	argc = 7;
+	// argv [0] = "-h";
+	// argv [1] = "127.0.0.1";
+	// argv [2] = "-p";
+	// argv [3] = "3011";
+	// argv [4] = "-k";
+	// argv [5] = "11";
+	// argv [6] = "";
+	// argc = 7;
 	if (p_Game->Connect(argc, argv) == -1)
 	{
 		LOG("Failed to connect to server!\n");

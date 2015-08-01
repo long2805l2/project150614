@@ -28,6 +28,15 @@ template <class T> struct Map
 	T& operator()(int idx) { return map[idx]; }
 	T& M (Position p) { return map[p.x + p.y*width]; }
 	T& M (int x, int y) { return map[x + y*width]; }
-	
+  void dump(void) {
+    for(int j=0;j<height;j++) {
+      for(int i=0;i<width;i++) {
+        int n = map[i+j*width];
+        if(n == 0 || n == INT_MAX) fprintf(stderr, "  ");
+        else fprintf(stderr, "%2d", n);
+      }
+      fprintf(stderr, "\n");
+    }
+  }
 	int idx (Position p) { return p.x + p.y*width; }
 };

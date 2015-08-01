@@ -285,7 +285,7 @@ function tron ()
 	if (allValidMoves == null) createVaildMoves ();
 	
 	nextMove = null;
-	var score = negamax (myPosition, enemyPosition, 16, -1000, 1000);
+	var score = negamax (myPosition, enemyPosition, 12, -1000, 1000);
 	// console.log ("nextMove: " + nextMove.x + ", " + nextMove.y);
 	
 	var dir = -1;

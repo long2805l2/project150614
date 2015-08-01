@@ -3,8 +3,10 @@
 #include <cstdio>
 #include <iostream>
 
-static char dx [4] = {-1, 0, 1, 0};
-static char dy [4] = {0, -1, 0, 1};
+static char dx [4] = { 0, 1, 0,-1};
+static char dy [4] = {-1, 0, 1, 0};
+// static char dx [4] = {-1, 0, 1, 0};
+// static char dy [4] = {0, -1, 0, 1};
 
 struct Position
 {

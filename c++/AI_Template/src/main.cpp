@@ -54,6 +54,8 @@ void AI_Update()
 
 int main(int argc, char* argv[])
 {
+	system ("call E:\\Workspace\\project150614\\trunk\\nodejs\\vsPC_debug.bat");
+
 	srand(clock());
 	
 #ifdef _WIN32
@@ -99,8 +101,6 @@ int main(int argc, char* argv[])
 #ifdef _WIN32
     WSACleanup();
 #endif
-	// int a;
-	// cin >> a;
-	// return a;
+
 	return 0;
 }

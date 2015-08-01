@@ -266,9 +266,10 @@ static volatile bool _timed_out = false;
 static int _ab_runs=0;
 static int _spacefill_runs=0;
 
-static void _alrm_handler(int sig) { _timed_out = true; }
+static void _alrm_handler (int sig) { _timed_out = true; }
+static bool timed_out () { return GetTickCount () - _timer > 1000; }
 
-static void reset_timer(long t)
+static void reset_timer()//long t)
 {
 	_timer = getTime();
 	// itimerval timer;
@@ -279,7 +280,7 @@ static void reset_timer(long t)
 	_timed_out = false;
 	_ab_runs = 0;
 	_spacefill_runs = 0;
-	_timeout = t;
+	// _timeout = t;
 }
 
 static long elapsed_time() { return getTime() - _timer; }
@@ -351,11 +352,11 @@ static int _spacefill(int &move, Components &ca, Position p, int itr)
 		return 0;
 	}
 	
-	if(_timed_out) return 0;
+	if(timed_out ()) return 0;
 	
 	if(itr == 0) return floodfill(ca, p);
 	
-	for(int m = 0; m < 4 && !_timed_out; m++)
+	for(int m = 0; m < 4 && !timed_out (); m++)
 	{
 		Position r = p.next(m);
 	
@@ -388,7 +389,7 @@ static int next_move_spacefill(Components &ca)
 	int area = ca.fillablearea(curstate.p[0]);
 	int bestv = 0, bestm = 1;
 	
-	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !_timed_out; itr++)
+	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !timed_out (); itr++)
 	{
 		cout<<"next_move_spacefill: "<<itr<<endl;
 		int m;
@@ -616,7 +617,7 @@ static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int it
 		return INT_MAX;
 	}
 
-	if (_timed_out) {
+	if (timed_out ()) {
 		return a;
 	}
 
@@ -631,7 +632,7 @@ static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int it
 	int kill = _killer[_maxitr-itr];
 	char bestmoves[DEPTH_MAX*2+2];
 	memset(bestmoves, 0, itr);
-	for(int _m=-1;_m<4 && !_timed_out;_m++) {
+	for(int _m=-1;_m<4 && !timed_out ();_m++) {
 		// convoluted logic: do "killer heuristic" move first
 		if(_m == kill) continue;
 		int m = _m == -1 ? kill : _m;
@@ -661,7 +662,7 @@ static int _alphabeta(char *moves, gamestate s, int player, int a, int b, int it
 			r.p[1] = s.p[1];
 		}
 
-		if(_timed_out) return -INT_MAX;
+		if(timed_out ()) return -INT_MAX;
 
 		if(a >= b) break;
 	}
@@ -677,8 +678,12 @@ static int next_move_alphabeta ()
 	char moves[DEPTH_MAX*2+2];
 	memset(moves, 0, sizeof(moves));
 
-	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !_timed_out;itr++)
+	cout<<"alphabeta run"<<endl;
+	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX;itr++)
 	{
+		long cTime = getTime();
+		cout<<"cTime: "<<cTime<<" - "<<_timer<<" = "<<(cTime - _timer)<<endl;
+		
 		_maxitr = itr*2;
 		int v = _alphabeta(moves, curstate, 0, -INT_MAX, INT_MAX, itr*2);
 
@@ -726,6 +731,7 @@ int run (int * board, Position myPos, Position enemyPos)
 	// signal (SIGINT, _alrm_handler);
 	// setlinebuf (stdout);
 	
+	reset_timer ();
 	if (map_update (board, myPos, enemyPos))
 	{
 		// Position p = curstate.p[0];

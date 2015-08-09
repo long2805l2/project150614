@@ -42,8 +42,8 @@ if (key1 != 0 && key2 != 0) {
 
 
 // THE GAME ITSELF
-var CONNECTING_TIME = 30000;
-var THINKING_TIME = 3000;
+var CONNECTING_TIME = 100000;
+var THINKING_TIME = 30000;
 
 
 var GAMESTATE_WAIT_FOR_PLAYER = 0;
@@ -140,12 +140,12 @@ function InitGame() {
 	}
 	
 	// Who will turn first?
-	// if (Math.random() < 0.5) {
+	if (Math.random() < 0.5) {
 		turn = TURN_PLAYER_1;
-	// }
-	// else {
-		// turn = TURN_PLAYER_2;
-	// }
+	}
+	else {
+		turn = TURN_PLAYER_2;
+	}
 	originalTurnFirst = turn;
 	
 	// Save this info to replay also

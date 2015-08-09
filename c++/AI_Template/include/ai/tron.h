@@ -13,24 +13,18 @@
 #include <ai/Map.h>
 #include <vector>
 
-#define TIMEOUT_USEC 990000
-#define FIRSTMOVE_USEC 2950000
+#define TIMEOUT_USEC 3000
 #define DEPTH_INITIAL 1
 #define DEPTH_MAX 100
 #define DRAW_PENALTY 0 // -itr // -500
-#define VERBOSE 2
+#define VERBOSE 0
 
 #define K1 55
 #define K2 194
 #define K3 3
 
 const int move_permute[4] = {DIRECTION_UP, DIRECTION_RIGHT, DIRECTION_DOWN, DIRECTION_LEFT};
-// so instead it's  1
-//                 4 3
-//                  2
-// const char position::dx[4]={ 0, 0, 1,-1};
-// const char position::dy[4]={-1, 1, 0, 0};
-// const int move_permute[4]={1,3,2,4};
+
 static inline int _min(int a, int b) { return a<b ? a : b; }
 static inline int _max(int a, int b) { return a>b ? a : b; }
 
@@ -277,29 +271,20 @@ long getTime()
 	return GetTickCount ();
 }
 
-static long _timer, _timeout;
-static volatile bool _timed_out = false;
+static long _timer;
 static int _ab_runs=0;
 static int _spacefill_runs=0;
 
-static void _alrm_handler (int sig) { _timed_out = true; }
-static bool timed_out () { return GetTickCount () - _timer > 1000; }
+static bool timed_out () { return long (GetTickCount ()) > _timer; }
 
-static void reset_timer()//long t)
+static void reset_timer()
 {
-	_timer = getTime();
-	// itimerval timer;
-	// memset(&timer, 0, sizeof(timer));
-	// timer.it_value.tv_sec = t/1000000;
-	// timer.it_value.tv_usec = t%1000000;
-	// setitimer(ITIMER_REAL, &timer, NULL);
-	_timed_out = false;
+	_timer = GetTickCount () + TIMEOUT_USEC;
 	_ab_runs = 0;
 	_spacefill_runs = 0;
-	// _timeout = t;
 }
 
-static long elapsed_time() { return getTime() - _timer; }
+static long elapsed_time() { return GetTickCount () - _timer; }
 
 static void dijkstra(Map<int> &d, const Position &s, Components &cp, int component)
 {
@@ -361,18 +346,23 @@ static int _spacefill(int &move, Components &ca, Position p, int itr)
 {
 	int bestv = 0;
 	int spacesleft = ca.fillablearea(p);
+	fprintf (stderr, "\n		spacesleft %d\n", spacesleft);
 	
-	if(degree(p) == 0)
+	int deg = degree(p);
+	fprintf (stderr, "		deg %d\n", deg);
+	if (deg == 0)
 	{
 		move=1;
 		return 0;
 	}
 	
-	if(timed_out ()) return 0;
+	fprintf (stderr, "		timed_out %d\n", timed_out ());
+	if (timed_out ()) return 0;
 	
-	if(itr == 0) return floodfill(ca, p);
+	fprintf (stderr, "		itr %d\n", itr);
+	if (itr == 0) return floodfill(ca, p);
 	
-	for(int m = 0; m < 4 && !timed_out (); m++)
+	for (int m = 0; m < 4 && !timed_out (); m++)
 	{
 		Position r = p.next(m);
 	
@@ -403,14 +393,17 @@ static int next_move_spacefill(Components &ca)
 {
 	int itr;
 	int area = ca.fillablearea(curstate.p[0]);
-	int bestv = 0, bestm = 1;
+	int bestv = 0;
+	int bestm = 1;
 	
-	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX && !timed_out (); itr++)
+	fprintf (stderr, "area %d\n", area);
+	for (itr=DEPTH_INITIAL; itr<DEPTH_MAX && !timed_out (); itr++)
 	{
-		// cout<<"next_move_spacefill: "<<itr<<endl;
 		int m;
 		_maxitr = itr;
+		fprintf (stderr, "	_maxitr: %d\n", _maxitr);
 		int v = _spacefill(m, ca, curstate.p[0], itr);
+		fprintf (stderr, "	_spacefill %d\n", v);
 		if(v > bestv) { bestv = v; bestm = m; }
 		if(v <= itr) break;
 		if(v >= area) break;
@@ -742,12 +735,10 @@ static int next_move_alphabeta ()
 	evaluations=0;
 	char moves[DEPTH_MAX*2+2];
 	memset(moves, 0, sizeof(moves));
-
-	// cout<<"alphabeta run"<<endl;
+	
 	for(itr=DEPTH_INITIAL;itr<DEPTH_MAX;itr++)
 	{
 		long cTime = getTime();
-		// cout<<"cTime: "<<cTime<<" - "<<_timer<<" = "<<(cTime - _timer)<<endl;
 		
 		_maxitr = itr*2;
 		int v = _alphabeta(moves, curstate, 0, -INT_MAX, INT_MAX, itr*2);
@@ -774,13 +765,12 @@ static int next_move_alphabeta ()
     fprintf(stderr, "10%% timeout violation: %ld us\n", e);
   }
 #endif
-	memmove(_killer, _killer+2, sizeof(_killer)-2); // shift our best-move tree forward to accelerate next move's search
+	memmove(_killer, _killer+2, sizeof(_killer)-2);
 	return lastm;
 }
 
 static int next_move()
 {
-	// cout<<"next move"<<endl;
 	Components cp (M);
 #if VERBOSE >= 2
   cp.dump();
@@ -790,31 +780,21 @@ static int next_move()
 	M(curstate.p[1]) = 1;
 	
 	if (cp.component (curstate.p[0]) == cp.component (curstate.p[1]))
-	{
-		// cout<<"use next_move_alphabeta"<<endl;
 		return next_move_alphabeta ();
-	}
 	
-	// cout<<"use next_move_spacefill"<<endl;
-	return next_move_spacefill(cp);
+	return next_move_spacefill (cp);
+	// return next_move_alphabeta ();
 }
 
 int run (int * board, Position myPos, Position enemyPos)
 {
 	memset (_killer, 0, sizeof(_killer));
-	// signal (SIGINT, _alrm_handler);
-	// setlinebuf (stdout);
 	
 	reset_timer ();
-	if (map_update (board, myPos, enemyPos))
-	{
-		// Position p = curstate.p[0];
-		// curstate.p[0] = curstate.p[1];
-		// curstate.p[1] = p;
-	}
+	map_update (board, myPos, enemyPos);
 	
 	int nextMove = next_move();
-	cout<<"next move: "<<nextMove<<" >> "<<move_permute [nextMove]<<endl;
 
+	fprintf(stderr, "thing %d ms\n", GetTickCount () - (_timer - TIMEOUT_USEC));
 	return move_permute [nextMove];
 }
